@@ -1,0 +1,45 @@
+% language: tamago
+namespace tamago::examples::protocols
+
+use tamago::prelude exposing Integer, Text, _ + _, _ ++ _;
+
+protocol Monoid(a, typ) with
+  method typ zero;
+  method a concat: b;
+  method a id = a;
+end
+
+implement Monoid(Integer, type Integer) with
+  method t zero = 2;
+  method a concat: b = a + b;
+end
+
+implement Monoid(Text, type Text) with
+  method a zero = "2";
+  method a concat: b = a ++ b;
+end
+
+protocol Combine(a, b) with
+  method a zip: b with: f;
+end
+
+implement Combine(Integer, Text) with
+  method a zip: b with: f = f(a, b);
+end
+
+implement Combine(Text, Integer) with
+  method a zip: b with: _ = [a, b];
+end
+
+define main: _ =
+begin
+  open Monoid exposing _ zero, _ concat: _;
+  open Combine exposing _ zip: _ with: _;
+
+  [
+    Integer zero concat: 1,
+    Text zero concat: "1",
+    1 zip: "1" with: (fun(a, b) -> [a, a, b, b]),
+    "1" zip: 1 with: (fun(a, b) -> [a, a, b, b])
+  ];
+end

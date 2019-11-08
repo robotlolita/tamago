@@ -1,0 +1,6 @@
+.ionide
+Tamago/**/obj
+Tamago/**/bin
+node_modules
+build
+*.tamago.js

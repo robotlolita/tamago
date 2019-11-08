@@ -1,0 +1,65 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Tamago",
+  "patterns": [
+    {
+      "name": "keyword.control.tamago",
+      "match": "(?<![a-zA-Z0-9\\-\\.\\^])(namespace|do|end|let|mutable|if|then|else|and|or|not|begin|assert|unreachable|data|match|when|as|default|with|use|exposing|for|in|repeat|yield|all|process|resume|handle|handler|protocol|method|implement|requires|open|test|where|is|fun|define|type)(?![a-zA-Z0-9\\-:])"
+    },
+    {
+      "name": "constant.language.tamago",
+      "match": "(?<![a-zA-Z0-9\\-])(true|false|nothing)(?![a-zA-Z0-9_])"
+    },
+    {
+      "name": "comment.line.heading.tamago",
+      "match": "%[^\\n\\r]*"
+    },
+    {
+      "name": "constant.numeric.integer.binary.tamago",
+      "match": "(?<![a-zA-Z0-9\\-])[\\-\\+]?0b[01][01_]*"
+    },
+    {
+      "name": "constant.numeric.integer.octal.tamago",
+      "match": "(?<![a-zA-Z0-9\\-])[\\-\\+]?0o[0-7][0-7_]*"
+    },
+    {
+      "name": "constant.numeric.integer.hexadecimal.tamago",
+      "match": "(?<![a-zA-Z0-9\\-])[\\-\\+]?0x[0-9a-fA-F][0-9a-fA-F_]*"
+    },
+    {
+      "name": "constant.numeric.integer.tamago",
+      "match": "(?<![a-zA-Z0-9\\-])[\\-\\+]?[0-9][0-9_]*"
+    },
+    {
+      "name": "constant.numeric.decimal.tamago",
+      "match": "(?<![a-zA-Z0-9\\-])[\\-\\+]?[0-9][0-9_]*(\\.[0-9][0-9_]*)?([eE][\\-\\+]?[0-9][0-9_]*)?"
+    },
+    {
+      "name": "storage.type.tamago",
+      "match": "\\^[a-zA-Z][a-zA-Z0-9\\-\\.]*"
+    },
+    {
+      "name": "variable.name.tamago",
+      "match": "(?<![a-zA-Z0-9\\-])[a-zA-Z][a-zA-Z0-9\\-]*|_"
+    },
+    {
+      "name": "string.quoted.double",
+      "begin": "\"",
+      "end": "\""
+    },
+    {
+      "name": "comment.line",
+      "match": "//.*"
+    },
+    {
+      "name": "comment.block.documentation",
+      "begin": "/\\*",
+      "end": "\\*/"
+    },
+    {
+      "name": "keyword.operator.tamago",
+      "match": "(?<![a-zA-Z0-9\\-])(\\||\\|>|===|=/=|==>|=>|>=|>>|>|<=|<<|<|=|\\+\\+|\\+|\\-|\\*\\*|\\*|/|@)(?!a-zA-Z0-9\\-)"
+    }
+  ],
+  "scopeName": "source.tamago"
+}

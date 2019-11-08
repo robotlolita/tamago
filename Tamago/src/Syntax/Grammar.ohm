@@ -1,0 +1,539 @@
+%[
+open Tamago.Language.Ast
+open Fable.Core
+
+[<Emit("Number($0)")>]
+let parseNumber s : double = jsNative
+
+[<Emit("JSON.parse($0)")>]
+let parseJson s : string = jsNative
+
+let parseString (s:string) = parseJson ((s.Replace("\r\n", "\\n")).Replace("\n", "\\n"))
+]%
+
+Tamago : File {
+  File =
+    | Header namespace_ ns:Namespace defs:DeclarationList end
+      %[ file ns defs ]%
+  
+  Header =
+    | "%" "language" ":" "tamago"
+
+  DeclarationList =
+    | xs:Declaration+  %[ xs ]%
+
+  Declaration =
+    | UseStatement
+    | OpenStatement
+    | DefineStatement
+    | FunctionStatement
+    | TestStatement
+    | DataStatement
+    | ProtocolStatement
+    | ImplementStatement
+    | HandlerStatement
+
+  /// Statements
+  StatementList =
+    | xs:Statement+  %[xs]%
+
+  Statement =
+    | UseStatement
+    | OpenStatement
+    | DefineStatement
+    | FunctionStatement
+    | TestStatement
+    | DataStatement
+    | HandlerStatement
+    | LetStatement
+    | LoopStatement
+    | IfStatement
+    | MatchStatement
+    | AssignStatement
+    | AssertStatement
+    | ResumeStatement
+    | ProtocolStatement
+    | ImplementStatement
+    | e:TrailingExpression  %[ SExpression e ]%
+
+  UseStatement =
+    | use_ ns:Namespace n:UseAlias bs:UseExposing ";"
+      %[ makeUse ns n bs ]%
+    | use_ ns:Namespace n:UseAlias ";"
+      %[ SUse (ns, n) ]%
+    | use_ ns:Namespace bs:UseExposing ";"
+      %[ makeUse ns (NFresh (fresh ns)) bs ]%
+  
+  UseAlias =
+    | as_ n:Name  %[ NStatic n ]%
+
+  UseExposing =
+    | exposing_ bs:CommaList<ExposeBinding>  %[ bs ]%
+
+  OpenStatement =
+    | open_ e:Expression exposing_ bs:CommaList<ExposeBinding> ";"
+      %[ SOpen (e, bs) ]%
+
+  ExposeBinding =
+    | s:Signature  %[ BFunction (sigToBinding s) ]%
+    | e:Name       %[ BVariable e ]%
+
+  DefineStatement =
+    | define_ n:Name "=" e:TrailingExpression
+      %[ SDefine (NStatic n, e) ]%
+
+  FunctionStatement =
+    | define_ s:Signature "=" begin_ xs:StatementList t:TrailingTest
+      %[ SMulti [|makeFun s xs; t (sigToName s)|] ]%
+    | define_ s:Signature "=" e:TrailingExpression
+      %[ makeFun s [|SExpression e|] ]%
+
+  Signature =
+    | op:PrefixOp n:Param                       %[ (prefixName op, [|n|]) ]%
+    | l:Param op:BinaryOp r:Param               %[ binarySig op l r ]%
+    | n:Param kws:KeywordParams                 %[ keywordSig kws (Some n) ]%
+    | kws:KeywordParams                         %[ keywordSig kws None ]%
+    | s:Param n:Name                            %[ unarySig n s ]%
+    | n:Name "(" ps:CommaList<Param> ")"        %[ (NStatic n, ps) ]%
+
+  Param =
+    | n:NamePattern   %[ parameter n ]%
+
+  KeywordParams =
+    | KeywordParam+
+
+  KeywordParam =
+    | kw:Keyword n:Param
+      %[ (kw, n) ]%
+
+  TrailingTest =
+    | where_ xs:StatementList end_
+      %[ box (fun n -> STest (n, xs)) ]%
+
+  TestStatement =
+    | test_ n:String "=" begin_ xs:StatementList end_
+      %[ let (LText n) = n in STest (n, xs) ]%
+    | test_ n:String "=" e:TrailingExpression
+      %[ let (LText n) = n in STest (n, [|SExpression e|]) ]%
+  
+  DataStatement =
+    | data_ c:UnionCase ";"
+      %[ SData (NStatic (caseName c), c) ]%
+    | data_ n:Name "=" "|"? cs:NonemptyListOf<UnionCase, "|"> ";"
+      %[ SUnion (NStatic n, cs) ]%
+
+  UnionCase =
+    | n:Name "{" ps:CommaList<FieldDef> "}"
+      %[ DDRecord (n, ps) ]%
+
+  FieldDef =
+    | n:Name "=" e:Expression   %[ FOptional (n, e) ]%
+    | n:Name                    %[ FRequired n ]%
+
+  HandlerStatement =
+    | default_ handler_ n:Name with_ cs:HandleCase+ end_
+      %[ SHandler(n, cs) ]%
+
+  LetStatement =
+    | let_ n:NamePattern "=" e:TrailingExpression
+      %[ SLet (n, e) ]%
+
+    | let_ mutable_ n:NamePattern "=" e:TrailingExpression
+      %[ SLetMutable (n, e) ]%
+
+  LoopStatement =
+    | for_ n:NamePattern in_ e:Expression begin_ s:StatementList end_
+      %[ SFor (n, e, s) ]%
+
+    | repeat_ with_ bs:CommaList<RepeatBinding> begin_ s:StatementList end_
+      %[ SRepeatWith (bs, s) ]%
+
+    | continue_ with_ bs:CommaList<RepeatBinding> ";"
+      %[ SContinueWith bs ]%
+
+    | repeat_ s:StatementList end_
+      %[ SRepeat s ]%
+    
+    | break_ ";"
+      %[ SBreak ]%
+
+  RepeatBinding =
+    | n:NamePattern "=" e:Expression
+      %[ (n, e) ]%
+
+  IfStatement =
+    | cs:IfClauses else_ a:StatementList end_
+      %[ SCond (cs, a) ]%
+    | cs:IfClauses end_
+      %[ SCond (cs, [|SExpression (ELiteral (LNothing))|]) ]%
+
+  IfClauses =
+    | if_ e:Expression then_ s:StatementList cs:IfClauseCont*
+      %[ Array.append [|e,s|] cs ]%
+
+  IfClauseCont =
+    | else_ if_ e:Expression then_ s:StatementList
+      %[ (e, s) ]%
+
+  MatchStatement =
+    | match_ e:Expression with_ cs:MatchCase+ end_
+      %[ SMatch (e, cs) ]%
+
+  MatchCase =
+    | "|" p:Pattern when_ g:Expression "=>" s:StatementList
+      %[ MCGuarded (p, g, s) ]%
+    | "|" p:Pattern "=>" s:StatementList
+      %[ MCUnguarded (p, s) ]%
+    | "|" default_ "=>" s:StatementList
+      %[ MCDefault s ]%
+
+  Pattern =
+    | p:Pattern as_ n:Name                                    %[ PBindAs (p, (NStatic n)) ]%
+    | l:LiteralExpression                                     %[ PLiteral l ]%
+    | "[" ps:CommaList<Pattern> "]"                           %[ PTuple ps ]%
+    | "{" ps:CommaList<PairPattern> "}"                       %[ PRecord ps ]%
+    | "^" e:Expression                                        %[ PEqual e ]%
+    | p:Pattern is_ e:MemberExpression                        %[ PCheck (p, e) ]%
+    | e:MemberExpression "{" ps:CommaList<PairPattern> "}"    %[ PExtractRecord (e, ps) ]%
+    | hole                                                    %[ PAnything ]%
+    | n:Name                                                  %[ PBind (NStatic n) ]%
+  
+  PairPattern =
+    | l:Name "=" e:Pattern
+      %[ (LStatic l, e) ]%
+    | l:Name
+      %[ (LStatic l, PBind (NStatic l)) ]%
+    | "(" k:Expression ")" "=" e:Pattern
+      %[ (LDynamic k, e) ]%
+
+  AssignStatement =
+    | n:Name "<-" e:TrailingExpression
+      %[ SAssign (NStatic n, e) ]%
+
+  AssertStatement =
+    | assert_ e:TrailingExpression
+      %[ SAssert (e, (Array.item 1 meta.children).sourceSlice) ]%
+    | unreachable_ s:String ";"
+      %[ let (LText x) = s in SUnreachable x ]%
+
+  ResumeStatement =
+    | resume_ with_ e:Expression ";"
+      %[ SResumeWith e ]%
+
+  ProtocolStatement =
+    | protocol_ n:Name "(" ps:CommaList<Name> ")" with_ xs:ProtocolDefinition+ end_
+      %[ SProtocol(n, ps, xs) ]%
+
+  ProtocolDefinition =
+    | method_ s:Signature "=" e:TrailingExpression
+      %[ optionalProtoDef s [|SExpression e|] ]%
+
+    | method_ s:Signature begin_ xs:StatementList end_
+      %[ optionalProtoDef s xs ]%
+
+    | method_ s:Signature ";"
+      %[ requiredProtoDef s ]%
+
+    | requires_ e:MemberExpression "(" ts:CommaList<Name> ")" ";"
+      %[ PDRequires (e, ts) ]%
+
+  ImplementStatement =
+    | implement_ p:MemberExpression "(" ps:CommaList<Expression> ")" with_ xs:ImplementDefinition+ end_
+      %[ SImplement (p, ps, xs) ]%
+
+  ImplementDefinition =
+    | method_ s:Signature "=" e:TrailingExpression
+      %[ implDef s [| SExpression e |] ]%
+    
+    | method_ s:Signature begin_ xs:StatementList end_
+      %[ implDef s xs ]%
+
+    | s:Statement
+      %[ ISStatement s ]%
+
+  TrailingExpression =
+    | e:AnyBlockExpression %[ e ]%
+    | e:Expression ";"     %[ e ]%
+
+
+  /// Expressions
+  Expression =
+    | PipeExpression
+    
+  PipeExpression =
+    | l:PipeExpression "|>" r:AssertMatchExpression     %[ EApply (r, [|l|]) ]%
+    | AssertMatchExpression
+    | LambdaExpression
+
+  LambdaExpression =
+    | BlockLambdaExpression
+    | fun_ "(" ps:CommaList<Param> ")" "->" e:Expression
+      %[ ELambda (ps, [|SExpression e|]) ]%
+
+  BlockLambdaExpression =
+    | fun_ "(" ps:CommaList<Param> ")" "->" begin_ xs:StatementList end_
+      %[ ELambda (ps, xs) ]%
+
+  AssertMatchExpression =
+    | e:YieldExpression "==>" p:Pattern                 %[ assertMatch e p ]%
+    | YieldExpression
+
+  YieldExpression =
+    | yield_ all_ e:KeywordExpression
+      %[ EYieldAll e ]%
+
+    | yield_ e:KeywordExpression
+      %[ EYield e ]%
+
+    | "!" e:KeywordExpression
+      %[ EPerform e ]%
+
+    | KeywordExpression
+
+  KeywordExpression =
+    | kws:KeywordApply                        %[ keywordApply None kws ]%
+    | s:BinaryExpression kws:KeywordApply     %[ keywordApply (Some s) kws ]%
+    | BinaryExpression
+
+  KeywordApply =
+    | KeywordApplyPair+
+    
+  KeywordApplyPair =
+    | k:Keyword e:BinaryExpression   %[ (k, e) ]%
+
+  BinaryExpression =
+    | l:UnaryExpression op:BinaryOp r:UnaryExpression
+      %[ EApply (EVariable (binaryName op), [|l; r|]) ]%
+    | v:UnaryExpression is_ t:UnaryExpression
+      %[ ECheck (t, v) ]%
+    | UnaryExpression
+
+  UnaryExpression =
+    | op:PrefixOp s:ApplyExpression
+      %[ EApply (EVariable (prefixName op), [|s|]) ]%
+    | type_ s:ApplyExpression
+      %[ EType s ]%
+    | s:ApplyExpression n:Name
+      %[ EApply (EVariable (unaryName n), [|s|]) ]%
+    | ApplyExpression
+
+  ApplyExpression =
+    | c:ApplyExpression ps:PositionalArgumentList    %[ EApply (c, ps) ]%
+    | o:ApplyExpression r:RecordExpression           %[ let (ERecord ps) = r in EUpdate (o, ps) ]%
+    | MemberExpression
+
+  MemberExpression =
+    | o:MemberExpression "." k:PropName             %[ EProject (o, (LStatic k)) ]%
+    | o:MemberExpression "." "(" k:Expression ")"   %[ EProject (o, (LDynamic k)) ]%
+    | PrimaryExpression
+    
+  PositionalArgumentList =
+    | "(" ps:CommaList<Expression> ")"  %[ ps ]%
+
+  PrimaryExpression =
+    | TupleExpression
+    | RecordExpression
+    | BeginExpression
+    | DoExpression
+    | HandleExpression
+    | ProcessExpression
+    | l:LiteralExpression       %[ ELiteral l ]%
+    | n:Name                    %[ EVariable (NStatic n) ]%
+    | hole                      %[ EHole ]%
+    | "(" e:Expression ")"      %[ e ]%
+
+  TupleExpression =
+    | "[" xs:CommaList<Expression> "]"
+      %[ ETuple xs ]%
+
+  BeginExpression =
+    | begin_ xs:StatementList end_
+      %[ EBlock xs ]%
+
+  DoExpression =
+    | do_ s:StatementList end_
+      %[ EDo s ]%
+
+  HandleExpression =
+    | handle_ s:StatementList with_ cs:HandleCase+ end_
+      %[ EHandle (s, cs) ]%
+
+  HandleCase =
+    | "|" p:HandlePattern when_ g:Expression "=>" s:StatementList
+      %[ MCGuarded (p, g, s) ]%
+    | "|" p:HandlePattern "=>" s:StatementList
+      %[ MCUnguarded (p, s) ]%
+
+  HandlePattern =
+    | e:MemberExpression "{" ps:CommaList<PairPattern> "}"    %[ PExtractRecord (e, ps) ]%
+
+  ProcessExpression =
+    | process_ s:StatementList end_
+      %[ EProcess s ]%
+
+  RecordExpression =
+    | "{" xs:CommaList<PairExpression> "}"
+      %[ ERecord xs ]%
+
+  PairExpression =
+    | l:Name "=" e:Expression
+      %[ (LStatic l, e) ]%
+    | l:Name
+      %[ (LStatic l, EVariable (NStatic l)) ]%
+    | "(" k:Expression ")" "=" e:Expression
+      %[ (LDynamic k, e) ]%
+
+  LiteralExpression =
+    | Float
+    | Integer
+    | String
+    | Boolean
+    | n:nothing_      %[ LNothing ]%
+
+  AnyBlockExpression =
+    | ProcessExpression
+    | DoExpression
+    | HandleExpression
+    | BeginExpression
+    | BlockLambdaExpression
+
+
+  PropName = n:id ~":"                                       %[ n ]%
+  Name = ~reserved n:id ~":"                                 %[ n ]%
+  Keyword = kw:keyword                                       %[ kw ]%
+  RestrictedMember = ~reserved ns:Namespace ~("." Keyword)   %[ ns ]%
+  Namespace = namespace
+  NamePattern = 
+    | n:Name    %[ NStatic n ]%
+    | hole      %[ NIgnore ]%
+  
+  BinaryOp = binary_op
+  PrefixOp = prefix_op
+
+  Float = f:float             %[ LFloat (parseNumber f) ]%
+  Integer = i:integer         %[ LInteger i ]%
+  Boolean = b:boolean         %[ LBoolean b ]%
+  String = s:string           %[ LText s ]%
+
+  CommaList<Rule> =
+    | x:NonemptyListOf<Rule, ","> ","?  %[ x ]%
+    |                                   %[ [||] ]%
+
+  // -- Lexemes
+  newline = "\n" | "\r"
+  line = (~newline any)*
+  comment = "//" line
+  space += comment
+
+  id_start = letter
+  id_rest = letter | digit | "-"
+  id = id_start id_rest*
+  namespace = nonemptyListOf<id, "::">
+  hole = "_"
+  keyword = id ":"
+
+
+  integer = ("-" | "+")? digit+
+  float = ("-" | "+")? digit+ "." digit+
+
+
+  boolean =
+    | true_       %[ true ]%
+    | false_      %[ false ]%
+
+
+  hex_digit = "a" .. "f" | "A" .. "F" | "0" .. "9"
+
+  escape_sequence =
+    | "u" unicode_escape
+    | any
+  
+  unicode_escape =
+    | hex_digit hex_digit hex_digit hex_digit
+
+  string_character =
+    | ~("\"" | "\\") any
+    | "\\" escape_sequence
+
+  double_string =
+    | "\"" string_character* "\""
+
+  string =
+    | s:double_string     %[ parseString s ]%
+
+
+  binary_op =
+    | ">=" | ">>" | ">"
+    | "<=" | "<<" | "<"
+    | "===" | "=/="
+    | "++" | "+"
+    | "-"
+    | "/"
+    | "**" | "*"
+    | and_ | or_
+
+  prefix_op =
+    | not_
+
+  kw<word> = word ~id_rest
+
+  namespace_ = kw<"namespace">
+  do_ = kw<"do">
+  end_ = kw<"end">
+  let_ = kw<"let">
+  mutable_ = kw<"mutable">
+  if_ = kw<"if">
+  then_ = kw<"then">
+  else_ = kw<"else">
+  true_ = kw<"true">
+  false_ = kw<"false">
+  and_ = kw<"and">
+  or_ = kw<"or">
+  not_ = kw<"not">
+  nothing_ = kw<"nothing">
+  begin_ = kw<"begin">
+  assert_ = kw<"assert">
+  unreachable_ = kw<"unreachable">
+  data_ = kw<"data">
+  match_ = kw<"match">
+  when_ = kw<"when">
+  as_ = kw<"as">
+  default_ = kw<"default">
+  with_ = kw<"with">
+  use_ = kw<"use">
+  exposing_ = kw<"exposing">
+  for_ = kw<"for">
+  in_ = kw<"in">
+  repeat_ = kw<"repeat">
+  break_ = kw<"break">
+  continue_ = kw<"continue">
+  yield_ = kw<"yield">
+  all_ = kw<"all">
+  process_ = kw<"process">
+  resume_ = kw<"resume">
+  handle_ = kw<"handle">
+  handler_ = kw<"handler">
+  protocol_ = kw<"protocol">
+  method_ = kw<"method">
+  implement_ = kw<"implement">
+  requires_ = kw<"requires">
+  open_ = kw<"open">
+  test_ = kw<"test">
+  where_ = kw<"where">
+  is_ = kw<"is">
+  fun_ = kw<"fun">
+  define_ = kw<"define">
+  type_ = kw<"type">
+
+  reserved =
+    | namespace_ | do_ | end_ 
+    | let_  | mutable_ | if_ | then_ | else_
+    | true_ | false_ | and_ | or_ | not_
+    | nothing_ | begin_ | assert_ | unreachable_
+    | data_ | match_ | when_ | as_ | default_ | with_
+    | use_ | exposing_ | for_ | in_ | repeat_
+    | yield_ | all_ | process_ | resume_ | handle_
+    | handler_ | protocol_ | method_ | implement_
+    | requires_ | open_ | test_ | where_ | is_ | fun_
+    | define_ | type_
+}

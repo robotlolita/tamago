@@ -1,0 +1,22 @@
+{
+  "private": true,
+  "scripts": {
+    "build-grammar": "fohm compile src/Syntax/Grammar.ohm --outDir src/Generated --name TamagoGrammar",
+    "build-compiler": "fable-splitter --config src/splitter.config.js",
+    "build": "npm run build-grammar && npm run build-compiler"
+  },
+  "dependencies": {
+    "@babel/preset-env": "^7.7.7",
+    "chalk": "^3.0.0",
+    "glob": "^7.1.6",
+    "ohm-js": "^0.14.0",
+    "prettier": "^1.19.1",
+    "resolve": "^1.14.1",
+    "yargs": "^15.0.2"
+  },
+  "devDependencies": {
+    "@origamitower/fohm": "^1.1.0",
+    "fable-compiler": "^2.4.11",
+    "fable-splitter": "^2.1.11"
+  }
+}

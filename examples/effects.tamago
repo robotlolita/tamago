@@ -1,0 +1,34 @@
+% language: tamago
+namespace tamago::examples::effects
+
+use tamago::prelude exposing _ ++ _, _ first, _ rest;
+
+data IO =
+  | Read {}
+  | Write { text };
+
+define read = IO.Read {};
+define write: text = IO.Write { text };
+
+define program() = do
+  !write: "What's your name?";
+  let name = !read;
+  !write: "Hello, " ++ name;
+end
+
+define main: _ = do
+  let mutable stdin = ["Alice"];
+  let mutable stdout = [];
+  handle
+    !program();
+    ["in = ", stdin, "out = ", stdout];
+  with
+  | IO.Read {} =>
+      let reply = stdin first;
+      stdin <- stdin rest;
+      resume with reply;
+  | IO.Write { text } =>
+      stdout <- stdout ++ [text];
+      resume with nothing;
+  end
+end

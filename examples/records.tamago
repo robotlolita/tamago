@@ -1,0 +1,27 @@
+% language: tamago
+namespace tamago::examples::records
+
+data Point2d { x, y = 0 };
+data Maybe =
+  | None {}
+  | Some { value };
+
+define main: _ =
+begin
+  let a = { x = 1, y = 2 };
+  let b = a { x = 2 };
+
+  let p1 = Point2d { x = 1, y = 1 };
+  let p2 = Point2d { x = 2 };
+  let p3 = p2 { y = 2 };
+
+  [
+    ["a", a, a.x, a.y],
+    ["b", b, b.x, b.y],
+    ["p1", p1, p1.x, p1.y],
+    ["p2", p2, p2.x, p2.y],
+    ["p3", p3, p3.x, p3.y],
+    Maybe.None {},
+    Maybe.Some { value = 1 }
+  ];
+end

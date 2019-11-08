@@ -1,0 +1,82 @@
+# Tamago
+
+A simple language that compiles efficiently to JavaScript and other OO hosts.
+
+Features:
+  - Smalltalk-like syntax
+  - Extensible records
+  - Tagged records
+  - Access control with views
+  - Protocols
+  - Tests
+  - Search spaces
+  - Operators as functions
+  - Contracts
+  
+
+Statement:
+  function N(P...) <ensures C> <requires C> do S... end
+  process N(P...) <ensures C> <requires C> do S... end
+  
+  data N(F...);
+  data N { NF... };
+  
+  data N = N(F...) | N { NF... } | N;
+
+  test STR do S... end
+  spec STR do TS... end
+
+  use NS as N <exposing B...> <hiding B...>;
+  
+  let N = E;
+  let mutable N = E;
+  
+  if E then S... <else if E then S...>... else S... end
+  match E with MC... end
+  
+  for N in E <invariant C> do S... end
+  repeat <invariant C> do S... end
+  repeat with <N = E>... <invariant C> do S... end
+  continue with <N = E>...;
+  break;
+
+  handle S... with HC... end
+
+  protocol N(N...) <extends E...> with PS... end
+  implement N(E...) with IPS... end
+
+  assert E;
+  unreachable STR;
+
+  E;
+
+Protocol Statement:
+  required function N(P...)
+  required process N(P...)
+  default function N(P...) do S... end
+  default process N(P...) do S... end
+
+Implement Protocol Statement:
+  function N(P...) do S... end
+  process N(P...) do S... end
+
+Expression:
+  E |> E                              pipe
+  E(E...)                             apply
+  _                                   hole
+  fun(P...) => S... end               lambda
+
+  { <L:E>... }                        make anonymous record
+  E { <L:E>... }                      make/extend record
+  E.L                                 project
+  
+  [E...]                              make tuple
+
+  N <- E                              mutate
+  N                                   load
+
+  perform E                           perform effect
+
+  begin S... end                      turn statements into expression
+
+  NS | STR | NUM | BOOL | NULL

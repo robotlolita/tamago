@@ -1,0 +1,49 @@
+% language: tamago
+namespace tamago::examples::language
+
+use tamago::prelude exposing _ + _;
+
+data Expr =
+  | Var { name }
+  | Num { value }
+  | Inc { expr }
+  | Lambda { parameter, body }
+  | Apply { callee, argument };
+
+open Expr exposing Var, Num, Inc, Lambda, Apply;
+
+define var(name) = Var { name };
+define fun: parameter do: body = Lambda { parameter, body };
+define apply: callee to: argument = Apply { callee, argument };
+define num(value) = Num { value };
+define inc(expr) = Inc { expr };
+
+define expr eval: ctx =
+begin
+  match expr with
+  | Var { name } => ctx(name);
+  | Num { value } => value;
+  | Inc { expr } => 1 + (expr eval: ctx);
+  | Lambda { parameter, body } =>
+      fun(value) ->
+        body eval: (fun(name) -> begin
+          match name with
+          | ^parameter => value;
+          | default => ctx(name);
+          end
+        end);
+  | Apply { callee, argument } =>
+      (callee eval: ctx)(argument eval: ctx);
+  end
+end
+
+define main: _ =
+begin
+  program eval: (fun(_) -> nothing);
+end
+
+define program =
+  apply:
+    (fun: "x" do: inc(var("x")))
+  to:
+    (num(2));
