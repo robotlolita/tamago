@@ -18,43 +18,9 @@ A Total program diverging is not an attack opportunity, from the point of view o
 
 ### The Total calculus
 
-```
-s in strings
-f in floats
-i in integers
-b in booleans
-l in labels
-x in variables
+See [tamago_total.erl](./reference/src/tamago_total.erl) for an annotated reference implementation of the Total calculus, covering abstract syntax, static semantics, and dynamic semantics.
 
-Decl d ::=
-  record x { l1, ..., lN }      -- record declaration
-  union x is c1, ..., cN end    -- union declaration
-  define x = e                  -- aliasing (lazy)
 
-UnionCase c ::=
-  record x { l1, ..., lN }
 
-Expr e ::=
-  nothing | s | f | i | b       -- primitives
-  e { l1 = e1, ..., lN = eN }   -- record instantiation
-  (e1, ..., eN)                 -- tuple
-  cons<e1, e2> | empty          -- lists
-  x                             -- variable dereference
-  let x = e1 in e2              -- let bindings
-  e(e1, ..., eN)                -- application
-  match e with m1, ..., mN end  -- pattern matching
-  e.l                           -- projection
 
-MatchCase m ::=
-  p when e1 => e2
-
-Pattern p ::=
-  _                             -- wildcard
-  x                             -- binding
-  p as x                        -- outer binding
-  nothing | s | f | i | b       -- literal
-  cons<p1, p2> | empty          -- list
-  (p1, ..., pN)                 -- tuple
-  e { l1 = p1, ..., lN = pN }   -- record
-```
 
