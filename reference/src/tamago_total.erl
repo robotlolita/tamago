@@ -1,34 +1,63 @@
+%% # The Total Calculus
+%%
+%% This module provides a reference implementation for the simplest calculus in Tamago:
+%% the Total calculus. It describes its abstract syntax, static semantics, and
+%% dynamic semantics through an operational reduction machine.
+%%
+%% The module is written in a sort-of literate style.
 -module(tamago_total).
 
-%%% # Abstract syntax
+%% # Abstract syntax
+%% 
+%% The most primitive types in Total are the same primitive types used by the rest
+%% of Tamago. These types are common among most programming languages.
+%%
+%% Tamago's `Text` is an opaque textual type; `Float` is a 64-bit IEEE752 floating
+%% point value. `Integer` is an arbitrary-precision integer value. `Boolean` is
+%% either `true` or `false`. And `nothing` is a special value to indicate that no
+%% value can be produced, similar to what MLs call `unit`.
 -type lit_value() ::
-  {string, string()}
+  {text, binary()}
 | {float, float()}
 | {integer, integer()}
 | {boolean, boolean()}
 | nothing.
 
+%% We extend these primitive values with some complex types:
+%%
+%%   - Tuples: immutable and static sequences of values (mixed types).
+%%   - List: the common linked list implementation (single type).
+%%   - Record: anonymous records with scoped labels.
 -type value() :: 
   lit_value()
 | {tuple, list(value())}
 | {cons, value(), value()}
 | empty
-| {record, list({atom(), value()})}
+| {record, list({atom(), value()})}.
 
+
+%% Moving on to the expression part of the terms, Total provides the bare
+%% minimum of features to transform the kind of values it provides.
+%% Transformations are mostly based on pattern matching and function
+%% application.
 -type expr() ::
   {eprimitive, lit_value()}
+%% Records support extension and direct projection.
 | {eupdate, expr(), list(expr_pair())}
 | {erecord, list(expr_pair())}
 | {eproject, expr(), atom()}
+
 | {etuple, list(expr())}
 | {econs, expr(), expr()}
 | eempty
+%% Local let bindings allow naming values.
+| {elet, atom(), expr(), expr()}
 | {evariable, atom()}
+
 | {eapply, expr(), list(expr())}
 | {ematch, expr(), list(match_case())}.
 
 -type expr_pair() :: {epair, atom(), expr()}.
-
 -type match_case() :: {match_case, pattern(), expr(), expr()}.
 
 -type pattern() ::
@@ -44,13 +73,43 @@
 -type pair_pattern() :: {pair_pattern, atom(), pattern()}.
 
 
-%%% # Runtime values
+%% # Runtime values
+%%
+%% While it's not possible to construct functions from Total, functions
+%% can still be used. The set of runtime values then includes all of the
+%% values we can construct from Total programs themselves, and the special
+%% `Procedure` type.
+%%
+%% Now, since a `Procedure` is an external, host-provided value, we can't
+%% describe its evaluation rules here. Rather, we only rely on the contract
+%% that such value takes a list of Tamago runtime values, and produces a
+%% new valid value of this set.
 -type runtime_value() ::
   value()
-| {lambda, list(atom()), expr()}.
+| {procedure, fun((list(runtime_value())) -> runtime_value())}.
 
 
-%%% # Static semantics
+%% # Static semantics
+%%
+%% There are certain semantics in Total programs that should be checked
+%% before they can be evaluated, which covers things that cannot be
+%% captured by the abstract syntax, as it often exhibits context-sensitive
+%% properties, and our specification of the abstract syntax through Erlang
+%% types can only describe so much.
+%%
+%% Static semantics either hold or not. When they don't hold, the program
+%% is considered invalid, and thus there are no dynamic semantics that
+%% can be applied to it.
+
+%% ## Unique labels
+%%
+%% A program in Total may describe anonymous records. Labels within a
+%% single record should always be unique. That is, a record like:
+%%
+%%     { l1 = a, l1 = b }
+%%
+%% Is not valid, as the label `l1` is provided twice. This is true
+%% even if both labels are associated with the same value.
 unique_labels({eupdate, E, Ps}) ->
   assert_unique(elabels(Ps)) andalso unique_labels(E);
 
@@ -92,28 +151,85 @@ unique_labels(_) -> true.
 
   
 
+%% # Interpretation
+%%
+%% Total is a pure language, so an interpretation of Total programs
+%% is straightforward with reductions. The `eval` function captures
+%% most of the work in reducing a Total expression down to a
+%% runtime value.
 
-%%% # Interpretation
+%% ## Primitive types
+%% 
+%% Primitive types are already valid runtime values. So any literal
+%% requires no evaluation steps.
 eval(C, {eprimitive, Value}) -> Value;
 
+%% ## Records
+%%
+%% Tamago supports anonymous records with scoped labels. One way of
+%% constructing such records is by providing a sequence of labelled
+%% values (where each label has to be unique).
+%%
+%% For example:
+%%
+%%     { x = 1, y = 2 }
+%%
+%% Would be all needed to describe a 2d point.
+%%
+%% Pairs are evaluated left-to-right in source order. In the above
+%% example, the expression associated with `x` would be evaluated
+%% first, then the expression associated with `y`.
+eval(C, {erecord, EPairs}) ->
+  Pairs = map3(EPairs, fun(E) -> eval(C, E) end),
+  {record, Pairs};
+
+%% Records can also be extended. When doing so, a new version of
+%% the record is generated, containing the same values as the
+%% old record, with any new associations described in the update.
+%%
+%% Labels within the update have to be unique, but updates are not
+%% restricted to just adding new labels to an existing record. They
+%% can also provide a new value to an existing label. Consider:
+%%
+%%     let p1 = { x = 1, y = 2 } in
+%%     p1 { x = 0, z = 3 }
+%%
+%% In this case, the resulting record shares the association for
+%% `y` from `p1`, but will contain its own association for `x`, as
+%% the value 0. It'll also contain a new association for `z`.
+%% Nothing is changed in `p1`.
 eval(C, {eupdate, ERecord, EPairs}) ->
   {record, OldPairs} = eval(C, ERecord),
   Pairs = map3(EPairs, fun(E) -> eval(C, E) end),
   {record, Pairs ++ OldPairs};
 
-eval(C, {erecord, EPairs}) ->
-  Pairs = map3(EPairs, fun(E) -> eval(C, E) end),
-  {record, Pairs};
-
+%% Finally, it's possible to project values from a record association
+%% if its label is known. Consider:
+%%
+%%     let p1 = { x = 1, y = 2 } in
+%%     p1.x
+%%
+%% This expression reduces to the value `1`, which is associated with
+%% `x` in that record. As evaluation is only defined for projecting
+%% existing association, trying to evaluate something like `p1.z`
+%% would be an error.
 eval(C, {eproject, ERecord, Label}) ->
   {record, Pairs} = eval(C, ERecord),
   {ok, Value} = assoc(Pairs, Label),
   Value;
 
+%% # Tuples and lists
+%%
+%% A tuple is a static, immutable sequence of values. It's a sort of
+%% iterative structure. Evaluation of its expressions proceeds from
+%% left to right.
 eval(C, {etuple, Exprs}) ->
   Values = map(Exprs, fun(E) -> eval(C, E) end),
   {tuple, Values};
 
+%% A list is an inductive, cons-cell-based structure. It has similar
+%% semantics to this same structure in eager functional languages.
+%% Evaluation again proceeds from left to right.
 eval(C, {econs, E1, E2}) ->
   V1 = eval(C, E1),
   V2 = eval(C, E2),
@@ -122,15 +238,62 @@ eval(C, {econs, E1, E2}) ->
 eval(C, eempty) ->
   empty;
 
+%% # Local bindings
+%%
+%% Total allows assigning names to values (but not computations!),
+%% through the `let` construct. The scope of these names is static,
+%% and they are valid over the region of the `let` body.
+%%
+%% When a `let` introoduces a name that already exists in the
+%% evaluation context, the new association simply shadows the
+%% existing value--that is, within the `let` body, the name
+%% will refer to the newly associated value, whereas it'll
+%% use the old value elsewhere.
+eval(C, {elet, Name, Expr1, Expr2}) ->
+  Value = eval(C, Expr1),
+  C2 = extend(C, [{Name, Value}]),
+  eval(C2, Expr2).
+
+%% We can extract associations from the context by dereferencing
+%% a name. This succeeds if the name has been introduced by either
+%% the host or an user's `let` construct.
 eval(C, {evariable, Name}) ->
   {ok, Value} = lookup(C, Name),
   Value;
 
+%% # Procedures
+%%
+%% Applications in Total only work if the callee evaluates to
+%% a host procedure. This host procedure makes the guarantee
+%% that it will take a list of runtime values and produce a
+%% new valid runtime value.
+%%
+%% Arguments provided to the application are evaluated left-to-right,
+%% after the callee has been fully evaluated.
+%%
+%% Total cannot make any guarantees about any other behaviour
+%% of the host procedure, thus in the presence of them it's
+%% even possible for a Total program to not terminate, or to
+%% be non-deterministic. We expect host procedures exposed
+%% to Total to make the same guarantees Total does, but there's
+%% no way to control that.
 eval(C, {eapply, ECallee, EArgs}) ->
-  {lambda, Params, Body} = eval(C, ECallee),
+  {procedure, Fun} = eval(C, ECallee),
   Args = map(EArgs, fun(E) -> eval(C, E) end),
-  eval(extend(C, zip(Params, Args)), Body);
+  Fun(Args);
 
+%% # Pattern matching
+%%
+%% Finally, pattern matching is the general tool for both
+%% extracting data and branching the evaluation. We evaluate
+%% the match expression, and then try each provided pattern
+%% in sequence.
+%% 
+%% Match cases are tried one-by-one, from top to bottom,
+%% until one succeeds, and its guard holds. If a case matches,
+%% we evaluate its body with the extended context featuring
+%% the specified bindings for parts of the value that have
+%% matched.
 eval(C, {ematch, E, Cases}) ->
   Value = eval(C, E),
   {match, Result} = match(C, Value, Cases),
