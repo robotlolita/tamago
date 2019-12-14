@@ -150,6 +150,12 @@ unique_labels({precord, Ps}) ->
 unique_labels(_) -> true.
 
   
+%% ## Unique pattern bindings
+%%
+%% In order to avoid having to unify variables produced during a match,
+%% we require all bindings in a pattern to be unique.
+unique_pattern_bindings(_) -> error(todo).
+
 
 %% # Interpretation
 %%
@@ -327,7 +333,7 @@ eval_if_guard_holds(C, Guard, Body) ->
   end.
 
 
-%% Matching a pattern against a value uses a simple unification
+%% Matching a pattern against a value uses a simplified unification
 %% algorithm. It can be made simple because duplicated bindings
 %% are not allowed in a Tamago pattern, thus all variables in
 %% a pattern are guaranteed to be fresh, and will always unify
