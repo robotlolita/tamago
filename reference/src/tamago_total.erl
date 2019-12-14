@@ -288,18 +288,24 @@ eval(C, {eapply, ECallee, EArgs}) ->
 %% extracting data and branching the evaluation. We evaluate
 %% the match expression, and then try each provided pattern
 %% in sequence.
-%% 
-%% Match cases are tried one-by-one, from top to bottom,
-%% until one succeeds, and its guard holds. If a case matches,
-%% we evaluate its body with the extended context featuring
-%% the specified bindings for parts of the value that have
-%% matched.
 eval(C, {ematch, E, Cases}) ->
   Value = eval(C, E),
   {match, Result} = match(C, Value, Cases),
   Result.
 
 
+%% Match cases are tried one-by-one, from top to bottom,
+%% until one succeeds. The successful match case than has
+%% its body evaluated in a context that's extended by the
+%% associations resulting from the matched pattern.
+%% 
+%% When a pattern matches, its unifications result in a set of
+%% associations between names and portions of the value being matched.
+%% A match case succeeds if, after its pattern matches, its guard
+%% expression also holds if evaluated in a new context that includes
+%% the matched associations from the pattern.
+%%
+%% If none of the patterns match, the computation diverges.
 match(C, Value, []) ->
   {no_match, Value};
 
@@ -321,28 +327,60 @@ eval_if_guard_holds(C, Guard, Body) ->
   end.
 
 
+%% Matching a pattern against a value uses a simple unification
+%% algorithm. It can be made simple because duplicated bindings
+%% are not allowed in a Tamago pattern, thus all variables in
+%% a pattern are guaranteed to be fresh, and will always unify
+%% with any value.
+%%
+%% This means that, in order to match pattern, we recursively
+%% apply simpler patterns against the value, and bubble up
+%% unified variables. When we have more than one pattern to
+%% match on a particular level, the `join` operation ensures
+%% that we bubble up the unified variables if none of the 
+%% patterns failed to match, and combine all of the sets of
+%% individual matches.
+
+%% The `wildcard` pattern always matches a value, but produces
+%% no association.
 apply(C, pwildcard, Value) -> 
   [];
 
+%% The `bind` pattern always matches a value, and produces a
+%% fresh variable association for the given name.
 apply(C, {pbind, Name}, Value) ->
   [{Name, Value}];
 
+%% The `outer_bind` pattern matches if its subpattern matches,
+%% in which case it produces a fresh variable association like
+%% `bind` does, but combines both match results.
 apply(C, {pouter_bind, Pattern, Name}, Value) ->
   join([{Name, Value}], apply(C, Pattern, Value));
 
+%% Literals match if the values being matched are the same,
+%% producing no associations.
 apply(C, {pliteral, Value}, Value) ->
   [];
 
+%% Lists match if its subpatterns match, and bubbles up the
+%% union of these matches.
 apply(C, {pcons, P1, P2}, {cons, V1, V2}) ->
   join(apply(C, P1, V1), apply(C, P2, V2));
 
 apply(C, pempty, empty) ->
   [];
 
+%% Tuples match if they have the same length, and all subpatterns
+%% match, bubbling up the union of these matches.
 apply(C, {ptuple, Ps}, {tuple, Vs}) when length(Ps) == length(Vs) ->
   Results = zip_with(Ps, Vs, fun(P, V) -> apply(C, P, V) end), 
   join_all(Results);
 
+%% Records match if the subpatterns provided match. In order to
+%% match these patterns, we expect the associations in the patterns
+%% to have a subset of the record's labels. We match each labelled
+%% pattern against the same labelled value in the record, but we
+%% don't require all labels to be present.
 apply(C, {precord, Ps}, {record, Pairs}) ->
   Labels = map(Ps, fun({pair_pattern, Label, _}) -> Label end),
   Patterns = map(Ps, fun({pair_pattern, _, Pattern}) -> Pattern end),
@@ -350,7 +388,13 @@ apply(C, {precord, Ps}, {record, Pairs}) ->
   Results = zip_with(Patterns, Values, fun(P, V) -> apply(C, P, V) end),
   join_all(Results).
 
+%% Any other case not covered so far means that the pattern does not
+%% have a chance of matching the value.
+apply(C, _Pattern, _Value) ->
+  failed.
 
+
+%%% # Helpers
 join(failed, _) -> failed;
 join(_, failed) -> failed;
 join(Xs, Ys) -> Xs ++ Ys.
@@ -364,8 +408,6 @@ extract(Pairs, [Label | Rest]) ->
   [Value | extract(Pairs, Rest)].
 
 
-
-%%% # Helpers
 assert_unique(Xs) ->
   lists:usort(Xs) =:= lists:sort(Xs).
 
