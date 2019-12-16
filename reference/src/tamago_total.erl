@@ -28,12 +28,22 @@
 %%   - Tuples: immutable and static sequences of values (mixed types).
 %%   - List: the common linked list implementation (single type).
 %%   - Record: anonymous records with scoped labels.
+%%   - Symbol: a reference type that can be used as a record label.
 -type value() :: 
   lit_value()
 | {tuple, list(value())}
 | {cons, value(), value()}
 | empty
-| {record, list({atom(), value()})}.
+| {record, list({label(), value()})}.
+
+
+%% Labels are used for defining associations in a record. We support
+%% the flat-namespace of atoms, where the associated value is always
+%% available, with reasonable performance. But we also support symbols,
+%% which are anonymous objects compared by reference, and allow more
+%% control over who has access to the association.
+-type symbol() :: {symbol, ref(), Description :: string()}. 
+-type label() :: atom() | symbol().
 
 
 %% Moving on to the expression part of the terms, Total provides the bare
@@ -42,10 +52,13 @@
 %% application.
 -type expr() ::
   {eprimitive, lit_value()}
+| {esymbol, Description :: string()}
+
 %% Records support extension and direct projection.
 | {eupdate, expr(), list(expr_pair())}
 | {erecord, list(expr_pair())}
 | {eproject, expr(), atom()}
+| {eproject, expr(), expr()}   % -- given the label evaluates to a symbol
 
 | {etuple, list(expr())}
 | {econs, expr(), expr()}
@@ -164,11 +177,61 @@ unique_pattern_bindings(_) -> error(todo).
 %% most of the work in reducing a Total expression down to a
 %% runtime value.
 
+%% ## Context
+%%
+%% The evaluation happens within a context. This context allows
+%% keeping track of local bindings, and also provides a way for
+%% generating unique symbols.
+-record(context, { bindings :: [{atom(), runtime_value()}]
+                 , fresh :: fun(() -> ref())
+                 }).
+
+empty_context() ->
+  #context{ bindings = []
+          , fresh = fun make_ref/1
+          }.
+
+bindings(#context{bindings = Bindings}) -> Bindings.
+
+fresh(#context{fresh = Fresh}) ->
+  Fresh().
+
+
+%% ## Base evaluation
+%%
+%% We can start evaluating an expression term in an empty context.
+eval(Expr) ->
+  eval(empty_context(), Expr).
+
+
 %% ## Primitive types
 %% 
 %% Primitive types are already valid runtime values. So any literal
 %% requires no evaluation steps.
 eval(C, {eprimitive, Value}) -> Value;
+
+%% ## Symbols
+%%
+%% To evaluate a symbol, we need to make sure we generate a new
+%% unique one. Total must guarantee that such symbols are unique
+%% within the process' memory, for the duration of the process.
+%% This means that if a process evaluates a program A, then shares
+%% its result with program B, program B must not be able to generate
+%% symbols that conflict with program A's.
+%%
+%% What Total does not guarantee, however, is that uniqueness is
+%% maintained when serialising values. In fact, serialisation of
+%% symbols is not defined by Total--requiring users to decide
+%% how to handle such cases. For example, where sensitive data
+%% is involved, data associated with symbols could be encrypted
+%% to be safely stored and shared. Where data is not relevant,
+%% it could be simply removed from the records upon serialisation.
+%% 
+%% We note that, by not making this guarantee, Total programs
+%% may be vulnerable to leaking serialised data depending on
+%% how users decide to handle that task.
+eval(C, {esymbol, Description}) ->
+  {symbol, fresh(C), Description}.
 
 %% ## Records
 %%
@@ -219,10 +282,28 @@ eval(C, {eupdate, ERecord, EPairs}) ->
 %% `x` in that record. As evaluation is only defined for projecting
 %% existing association, trying to evaluate something like `p1.z`
 %% would be an error.
-eval(C, {eproject, ERecord, Label}) ->
+eval(C, {eproject, ERecord, Label}) when is_atom(Label) ->
   {record, Pairs} = eval(C, ERecord),
   {ok, Value} = assoc(Pairs, Label),
   Value;
+
+%% We may also project things from a record when given an expression
+%% that evaluates to a symbol. In this case, the evaluation proceeds
+%% roughly in a similar fashion to the atom-based label case, just
+%% with the additional step of evaluating the expression down to
+%% a symbol, which happens after we evaluate the record.
+%%
+%%    let name = symbol "name" in
+%%    let p1 = { (name) = "secret" } in
+%%    p1.(name)
+%%
+%% In the above example, we'd evaluate the program down to the
+%% string "secret".
+eval(C, {eproject, ERecord, ELabel}) ->
+  {record, Pairs} = eval(C, ERecord),
+  {symbol, Ref, Desc} = eval(C, ELabel),
+  {ok, Value} = assoc(Pairs, {symbol, Ref, Desc}),
+  Value.
 
 %% # Tuples and lists
 %%
