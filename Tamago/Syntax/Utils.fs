@@ -58,3 +58,9 @@ let makeApp args (ns, keywords) =
   | None -> EApply ((EVariable name), args)
   | Some ns ->
       EApply (projectPath (ns +++ [name]), args)
+
+[<Emit("Number($0)")>]
+let parseNumber s = jsNative
+
+[<Emit("JSON.parse($0)")>]
+let parseString s = jsNative

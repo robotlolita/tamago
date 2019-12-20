@@ -134,8 +134,7 @@ Tamago {
     | "{" ps:List0<RecordPair, ","> "}"  %[ ps ]%
 
   RecordPair =
-    | n:Name "=" e:Expression                   %[ propertyExpr (LELabel n) e ]%
-    | "(" n:Expression ")" "=" e:Expression     %[ propertyExpr (LEDynamic n) e ]%
+    | l:Label "=" e:Expression                   %[ propertyExpr l e ]%
 
   MemberExpr =
     | o:MemberExpr "." n:Name                     %[ EProject (o, LELabel n) ]%
@@ -145,7 +144,8 @@ Tamago {
   PrimaryExpr =
     | MatchExpr
     | LambdaExpr
-    | LiteralExpr
+    | l:LiteralExpr             %[ ELiteral l ]%
+    | RecordExpr
     | ListExpr
     | HoleExpr
     | BreakExpr
@@ -153,66 +153,79 @@ Tamago {
     | "(" e:ExprWithTuple ")"   %[ e ]%
 
   MatchExpr =
-    | match_ ExprWithTuple with_ MatchCase+ end_
+    | match_ e:ExprWithTuple with_ cs:MatchCase+ end_
+      %[ EMatch (e, list cs) ]%
 
   MatchCase =
-    | "|" Pattern when_ Expression "=>" Expression    -- guarded
-    | "|" Pattern "=>" Expression                     -- unguarded
+    | "|" p:Pattern when_ g:Expression "=>" e:Expression    %[ matchCase p g e ]%
+    | "|" p:Pattern "=>" e:Expression                       %[ matchCase0 p e ]%
 
   Pattern =
-    | Pattern as_ Name                                          -- outer_bind
-    | Pattern "::" MemberExpr                                   -- check
-    | LiteralExpr                                               -- literal
-    | "[" NonemptyListOf<Pattern, ","> "," "..." Pattern "]"    -- cons
-    | "[" ListOf<Pattern, ","> "]"                              -- list
-    | MemberExpr "{" ListOf<PatternPair, ","> "}"               -- extractor
-    | Name                                                      -- bind
-    | "_"                                                       -- any
-    | "(" GroupPattern ")"                                      -- group
+    | p:Pattern as_ n:NamePattern                               %[ POuterBind (p, n) ]%
+    | p:Pattern "::" m:MemberExpr                               %[ PContract (p, m) ]%
+    | l:LiteralExpr                                             %[ PLiteral l ]%
+    | "[" hd:List1<Pattern, ","> "," "..." tl:Pattern "]"       %[ PCons (hd, tl) ]%
+    | "[" ps:List0<Pattern, ","> "]"                            %[ PList ps ]%
+    | o:MemberExpr "{" ps:List0<PatternPair, ","> "}"           %[ PExtractor (o, ps) ]%
+    | n:NamePattern                                             %[ PBind n ]%
+    | "_"                                                       %[ PAnything ]%
+    | "(" p:GroupPattern ")"                                    %[ p ]%
 
   GroupPattern =
-    | Pattern "," NonemptyListOf<Pattern, ",">                  -- tuple
+    | hd:Pattern "," tl:List1<Pattern, ",">                     %[ PTuple (hd :: tl) ]%
     | Pattern
 
   PatternPair =
-    | Name "=" Pattern    -- explicit
-    | Name                -- implicit
+    | l:Label "=" p:Pattern     %[ propertyPattern l p ]%
+    | n:Name                    %[ propertyPattern (LELabel n) (PBind n) ]%
+
+  Label =
+    | "(" e:Expression ")"      %[ LEDynamic e ]%
+    | n:Name                    %[ LELabel n ]%
+
+  RecordExpr =
+    | ps:RecordProperties       %[ ERecord ps ]%
 
   LambdaExpr =
-    | "(" ListOf<Name, ","> ")" "=>" Expression
+    | "(" ps:ListOf<Param, ","> ")" "=>" e:Expression
+      %[ ELambda (ps, e) ]%
 
   LiteralExpr =
     | Float
     | Integer
     | String
     | Boolean
-    | nothing_  -- nothing
+    | n:nothing_      %[ LNothing ]%
 
   ListExpr =
-    | "[" NonemptyListOf<Expression, ","> "," "..." Expression "]"  -- cons
-    | "[" ListOf<Expression, ","> "]"                               -- fixed
+    | "[" hd:List1<Expression, ","> "," "..." tl:Expression "]"     %[ ECons (hd, tl) ]%
+    | "[" xs:List0<Expression, ","> "]"                             %[ EList xs ]%
 
   TupleExpr =
-    | Expression "," NonemptyListOf<Expression, ",">
+    | hd:Expression "," tl:List1<Expression, ",">                   %[ ETuple (hd :: tl) ]%
 
   HoleExpr =
-    | hole
-
-  BreakExpr =
-    | break_
+    | hole      %[ EHole ]%
 
 
-  Name = ~reserved id ~":"
-  Keyword = keyword
-  RestrictedMember = Namespace ~("." Keyword)
-  Namespace = NonemptyListOf<Name, ".">
-  NamePattern = Name | hole
+  Name = ~reserved n:id ~":"                          %[ n ]%
+  Keyword = kw:keyword                                %[ kw ]%
+  RestrictedMember = ns:Namespace ~("." Keyword)      %[ ns ]%
+  Namespace = List1<Name, ".">
+  NamePattern = 
+    | n:Name    %[ NPName n ]%
+    | hole      %[ NPIgnore ]%
+  
   BinaryOp = binary_op
   PrefixOp = prefix_op
-  Float = float
-  Integer = integer
-  Boolean = boolean
-  String = double_string
+
+  Float = f:float             %[ LFloat (parseNumber f) ]%
+  Integer = i:integer         %[ LInteger i ]%
+  Boolean = b:boolean         %[ LBoolean b ]%
+  String = s:double_string    %[ LString (parseString s) ]%
+
+  List1<A, B> = x:NonemptyListOf<A, B>  %[ list x ]%
+  List0<A, B> = x:ListOf<A, B>          %[ list x ]%
 
   // -- Lexemes
   newline = "\n" | "\r"
@@ -231,7 +244,9 @@ Tamago {
   float = ("-" | "+")? digit+ "." digit+
 
 
-  boolean = true_ | false_
+  boolean =
+    | true_       %[ true ]%
+    | false_      %[ false ]%
 
 
   hex_digit = "a" .. "f" | "A" .. "F" | "0" .. "9"

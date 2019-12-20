@@ -29,8 +29,8 @@ and Expression =
   | ELambda of Parameter list * Expression
   | EVariable of Name
   | EHole
-  | ECons of head:Expression * tail:Expression
-  | EEmpty
+  | ECons of head:Expression list * tail:Expression
+  | EList of Expression list
   | ETuple of Expression list
   | ELiteral of Literal
 
@@ -73,7 +73,8 @@ and Pattern =
   | POuterBind of Pattern * NamePattern
   | PContract of Pattern * Expression
   | PLiteral of Literal
-  | PCons of head:Pattern * tail:Pattern
+  | PCons of head:Pattern list * tail:Pattern
+  | PList of Pattern list
   | PTuple of Pattern list
   | PRecord of PropertyPattern list
   | PExtractor of object:Expression * PropertyPattern list
