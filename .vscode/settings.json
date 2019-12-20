@@ -1,4 +1,5 @@
 {
   "editor.wordWrap": "bounded",
-  "editor.wordWrapColumn": 100
+  "editor.wordWrapColumn": 100,
+  "terminal.integrated.shell.windows": "C:\\Windows\\System32\\cmd.exe"
 }

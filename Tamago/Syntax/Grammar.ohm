@@ -1,0 +1,314 @@
+%[
+open Tamago.Language.Ast
+open Tamago.Language.Syntax.Utils
+
+]%
+
+Tamago {
+  File =
+    | Header module_ ns:Namespace defs:Definition* end
+      %[ file ns (list defs) ]%
+  
+  Header =
+    | "%" "language" ":" "tamago"
+
+  Definition =
+    | ImportDef
+    | RecordDef
+    | UnionDef
+    | FunctionDef
+    | AliasDef
+    | ModuleDef
+    | TestDef
+
+  ImportDef =
+    | use_ ns:Namespace as_ n:Alias
+      %[ DImport (ns, n) ]%
+
+  UnionDef =
+    | union_ n:Name is_ cs:UnionCase+ end_
+      %[ DUnion (n, list cs) ]%
+
+  UnionCase =
+    | r:RecordDef
+      %[ recordToVariant r ]%
+
+  RecordDef =
+    | record_ n:Name "{" ps:List0<Name, ","> "}"
+      %[ DRecord (n, ps) ]%
+  
+  FunctionDef =
+    | function_ s:Signature "=" e:Expression t:FunctionTest?
+      %[ makeFunDeclaration s e t ]%
+
+  FunctionTest =
+    | where_ e:Expression   %[ e ]%
+
+  AliasDef =
+    | define_ n:Name "=" e:Expression
+      %[ DDefine (n, e) ]%
+
+  ModuleDef =
+    | module_ n:Name is_ defs:Definition* end_
+      %[ DModule (n, list defs) ]%
+
+  TestDef =
+    | test_ s:String do_ e:Expression end_
+      %[ DTest (s, e) ]%
+
+  Signature =
+    | n:Param kws:KeywordParams                 %[ makeSig [n] kws ]%
+    | kws:KeywordParams                         %[ makeSig [] kws ]%
+    | l:Param op:BinaryOp r:Param               %[ (op, [l, r]) ]%
+    | op:PrefixOp n:Param                       %[ (op, [n]) ]%
+    | s:Param n:Name                            %[ (n, [s]) ]%
+
+  Param =
+    | n:NamePattern   %[ parameter n ]%
+
+  KeywordParams =
+    | kws:KeywordParam+   %[ list kws ]%
+
+  KeywordParam =
+    | kw:Keyword n:Param
+      %[ (kw, n) ]%
+  
+
+  ExprWithTuple =
+    | TupleExpr
+    | Expression
+
+  Expression =
+    | SequenceExpr
+
+  SequenceExpr =
+    | l:SequenceExpr ";" r:Expression     %[ ESequence (l, r) ]%
+    | AssertExpr
+
+  LetExpr =
+    | let_ p:Pattern "=" v:IfExpr in_ e:Expression    %[ makeLet p v e ]%
+    | IfExpr
+
+  IfExpr = 
+    | if_ t:PipeExpr then_ c:Expression else_ a:Expression   %[ EIf (t, c, a) ]%
+    | PipeExpr
+
+  PipeExpr =
+    | l:PipeExpr "|>" r:KeywordExpr     %[ EApply (r, [l]) ]%
+    | KeywordExpr
+
+  KeywordExpr =
+    | kws:KeywordApply                  %[ makeApp [] kws ]%
+    | s:BinaryExpr kws:KeywordApply     %[ makeApp [s] kws ]%
+    | BinaryExpr
+
+  KeywordApply =
+    | ns:Namespace "." kws:KeywordApplyPair+  %[ (Some ns, list kws) ]%
+    | kws:KeywordApplyPair+                   %[ (None, list kws) ]%
+    
+  KeywordApplyPair =
+    | k:Keyword e:BinaryExpr   %[ (k, e) ]%
+
+  AssertExpr =
+    | assert_ e:PipeExpr              %[ EAssert e ]%
+    | l:PipeExpr "==>" r:PipeExpr     %[ EAssertMatch (l, r) ]%
+
+  BinaryExpr =
+    | l:UnaryExpr op:BinaryOp r:UnaryExpr     %[ EApply (EVariable op, [l, r]) ]%
+    | UnaryExpr
+
+  UnaryExpr =
+    | op:PrefixOp s:ApplyExpr             %[ EApply (EVariable op, [s]) ]%
+    | s:ApplyExpr n:RestrictedMember      %[ EApply (projectPath n, [s]) ]%
+    | ApplyExpr
+
+  ApplyExpr =
+    | c:ApplyExpr ps:PositionalArgumentList     %[ EApply (c, ps) ]%
+    | o:ApplyExpr ps:RecordProperties           %[ EUpdate (o, ps) ]%
+    | MemberExpr
+
+  PositionalArgumentList =
+    | "(" ps:List0<Expression, ","> ")"  %[ ps ]%
+
+  RecordProperties =
+    | "{" ps:List0<RecordPair, ","> "}"  %[ ps ]%
+
+  RecordPair =
+    | n:Name "=" e:Expression                   %[ propertyExpr (LELabel n) e ]%
+    | "(" n:Expression ")" "=" e:Expression     %[ propertyExpr (LEDynamic n) e ]%
+
+  MemberExpr =
+    | o:MemberExpr "." n:Name                     %[ EProject (o, LELabel n) ]%
+    | o:MemberExpr "." "(" n:Expression ")"       %[ EProject (o, LEDynamic n) ]%
+    | PrimaryExpr
+
+  PrimaryExpr =
+    | MatchExpr
+    | LambdaExpr
+    | LiteralExpr
+    | ListExpr
+    | HoleExpr
+    | BreakExpr
+    | n:Name                    %[ EVariable n ]%
+    | "(" e:ExprWithTuple ")"   %[ e ]%
+
+  MatchExpr =
+    | match_ ExprWithTuple with_ MatchCase+ end_
+
+  MatchCase =
+    | "|" Pattern when_ Expression "=>" Expression    -- guarded
+    | "|" Pattern "=>" Expression                     -- unguarded
+
+  Pattern =
+    | Pattern as_ Name                                          -- outer_bind
+    | Pattern "::" MemberExpr                                   -- check
+    | LiteralExpr                                               -- literal
+    | "[" NonemptyListOf<Pattern, ","> "," "..." Pattern "]"    -- cons
+    | "[" ListOf<Pattern, ","> "]"                              -- list
+    | MemberExpr "{" ListOf<PatternPair, ","> "}"               -- extractor
+    | Name                                                      -- bind
+    | "_"                                                       -- any
+    | "(" GroupPattern ")"                                      -- group
+
+  GroupPattern =
+    | Pattern "," NonemptyListOf<Pattern, ",">                  -- tuple
+    | Pattern
+
+  PatternPair =
+    | Name "=" Pattern    -- explicit
+    | Name                -- implicit
+
+  LambdaExpr =
+    | "(" ListOf<Name, ","> ")" "=>" Expression
+
+  LiteralExpr =
+    | Float
+    | Integer
+    | String
+    | Boolean
+    | nothing_  -- nothing
+
+  ListExpr =
+    | "[" NonemptyListOf<Expression, ","> "," "..." Expression "]"  -- cons
+    | "[" ListOf<Expression, ","> "]"                               -- fixed
+
+  TupleExpr =
+    | Expression "," NonemptyListOf<Expression, ",">
+
+  HoleExpr =
+    | hole
+
+  BreakExpr =
+    | break_
+
+
+  Name = ~reserved id ~":"
+  Keyword = keyword
+  RestrictedMember = Namespace ~("." Keyword)
+  Namespace = NonemptyListOf<Name, ".">
+  NamePattern = Name | hole
+  BinaryOp = binary_op
+  PrefixOp = prefix_op
+  Float = float
+  Integer = integer
+  Boolean = boolean
+  String = double_string
+
+  // -- Lexemes
+  newline = "\n" | "\r"
+  line = (~newline any)*
+  comment = "//" line
+  space += comment
+
+  id_start = letter
+  id_rest = letter | digit | "-"
+  id = id_start id_rest*
+  hole = "_"
+  keyword = id ":"
+
+
+  integer = ("-" | "+")? digit+
+  float = ("-" | "+")? digit+ "." digit+
+
+
+  boolean = true_ | false_
+
+
+  hex_digit = "a" .. "f" | "A" .. "F" | "0" .. "9"
+
+  escape_sequence =
+    | "u" unicode_escape    -- unicode
+    | any
+  
+  unicode_escape =
+    | hex_digit hex_digit hex_digit hex_digit
+
+  string_character =
+    | ~("\"" | "\\") any        -- regular
+    | "\\" escape_sequence      -- escaped
+
+  double_string =
+    | "\"" string_character* "\""
+
+
+  binary_op =
+    | ">=" | ">>" | ">"
+    | "<=" | "<<" | "<"
+    | "===" | "=/="
+    | "++" | "+"
+    | "-"
+    | "/"
+    | "**" | "*"
+    | and_ | or_
+
+  prefix_op =
+    | not_
+
+  kw<word> = word ~id_rest
+
+  use_ = kw<"use">
+  as_ = kw<"as">
+  record_ = kw<"record">
+  module_ = kw<"module">
+  do_ = kw<"do">
+  end_ = kw<"end">
+  define_ = kw<"define">
+  let_ = kw<"let">
+  in_ = kw<"in">
+  if_ = kw<"if">
+  then_ = kw<"then">
+  else_ = kw<"else">
+  assert_ = kw<"assert">
+  true_ = kw<"true">
+  false_ = kw<"false">
+  nothing_ = kw<"nothing">
+  new_ = kw<"new">
+  and_ = kw<"and">
+  or_ = kw<"or">
+  not_ = kw<"not">
+  external_ = kw<"external">
+  match_ = kw<"match">
+  with_ = kw<"with">
+  when_ = kw<"when">
+  test_ = kw<"test">
+  for_ = kw<"for">
+  function_ = kw<"function">
+  process_ = kw<"process">
+  where_ = kw<"where">
+  yield_ = kw<"yield">
+  all_ = kw<"all">
+  break_ = kw<"break">
+  union_ = kw<"union">
+  is_ = kw<"is">
+
+  reserved =
+    | use_ | as_ | record_ | module_
+    | do_ | end_ | define_ | let_ 
+    | in_ | if_ | then_ | else_ 
+    | assert_ | true_ | false_
+    | nothing_ | new_ | and_ | or_ | not_
+    | external_ | match_ | with_ | when_
+    | test_ | for_ | function_ | process_
+    | where_ | yield_ | all_ | break_
+    | union_ | is_
+}
