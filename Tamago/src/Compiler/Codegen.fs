@@ -400,13 +400,16 @@ and compileLabel cc label =
 and compileMatchCase cc (c:MatchCase) =
   let locals = patternLocals c.pattern
   let cc1 = Context.extendLocals (Set.ofList locals) cc
-  let ps = List.map jsId locals
+  let ps = jsRecord (List.map compileMatchBind locals)
   jsArray [
     compilePattern cc c.pattern
-    jsArray (List.map jsStr locals)
-    jsAnonFun ps [jsReturn (compileExpr cc1 c.guard)]
-    jsAnonFun ps [jsReturn (compileExpr cc1 c.body)]
+    jsAnonFun [ps] [jsReturn (compileExpr cc1 c.guard)]
+    jsAnonFun [ps] [jsReturn (compileExpr cc1 c.body)]
   ]
+
+and compileMatchBind name =
+  (jsStr name), (jsId name)
+
 
 and compilePattern cc p =
   match p with
