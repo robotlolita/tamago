@@ -1,3 +1,4 @@
 .ionide
-Tamago/obj
-Tamago/bin
+Tamago/**/obj
+Tamago/**/bin
+node_modules

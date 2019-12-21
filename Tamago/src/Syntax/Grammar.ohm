@@ -1,10 +1,9 @@
 %[
 open Tamago.Language.Ast
 open Tamago.Language.Syntax.Utils
-
 ]%
 
-Tamago {
+Tamago : File {
   File =
     | Header module_ ns:Namespace defs:Definition* end
       %[ file ns (list defs) ]%
@@ -252,15 +251,15 @@ Tamago {
   hex_digit = "a" .. "f" | "A" .. "F" | "0" .. "9"
 
   escape_sequence =
-    | "u" unicode_escape    -- unicode
+    | "u" unicode_escape
     | any
   
   unicode_escape =
     | hex_digit hex_digit hex_digit hex_digit
 
   string_character =
-    | ~("\"" | "\\") any        -- regular
-    | "\\" escape_sequence      -- escaped
+    | ~("\"" | "\\") any
+    | "\\" escape_sequence
 
   double_string =
     | "\"" string_character* "\""

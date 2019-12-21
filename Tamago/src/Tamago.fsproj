@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="FsharpUtils.fs" />
+    <Compile Include="Ast.fs" />
+    <Compile Include="Syntax/Utils.fs" />
+    <Compile Include="Generated/TamagoGrammar.fs" />
+    <Compile Include="PrettyPrint.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Fable.Core" Version="2.0.1" />
+    <PackageReference Include="Fable.Import.Node" Version="0.4.3" />
+  </ItemGroup>
+</Project>
