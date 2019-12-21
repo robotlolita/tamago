@@ -151,7 +151,7 @@ let rec defLazyLocals def =
   | DModule (n, _) -> []
   | DTest _ -> []
   | DFunction (n, _, _) -> []
-  | DMulti xs -> List.collect defLocals xs
+  | DMulti xs -> List.collect defLazyLocals xs
 
 let namePatternLocals np =
   match np with
@@ -209,6 +209,28 @@ let moduleId xs = String.concat "." xs
 
 
 //== Generator primitives
+let prelude =
+  """
+ const $rt = Tamago.make_runtime(__dirname, __filename, require);
+ const $pattern = $rt.pattern;
+ const $gte = $rt.builtin.gte;
+ const $gt = $rt.builtin.gt;
+ const $lte = $rt.builtin.lte;
+ const $lt = $rt.builtin.lt;
+ const $eq = $rt.builtin.eq;
+ const $neq = $rt.builtin.neq;
+ const $composer = $rt.builtin.composer;
+ const $composel = $rt.builtin.composel;
+ const $concat = $rt.builtin.concat;
+ const $plus = $rt.builtin.plus;
+ const $minus = $rt.builtin.minus;
+ const $times = $rt.builtin.times;
+ const $divide = $rt.builtin.divide;
+ const $and = $rt.builtin.and;
+ const $or = $rt.builtin.or;
+ const $not = $rt.builtin.not;
+  """
+
 let rec compileFile cc (file:File) =
   let cc = includeModuleLocals cc file.definitions
   defMod (moduleId file.``namespace``)
@@ -357,12 +379,12 @@ and compileCase (c:UnionCase) =
   defCase c.tag (List.map compilePropDef c.properties)
 
 and compileParam cc (c:Parameter) =
-  compileNamePattern cc c.name
+  jsId (compileNamePattern cc c.name)
 
 and compileNamePattern cc n =
   match n with
-  | NPName n -> jsStr n
-  | NPIgnore -> jsStr (Context.freshIgnore cc)
+  | NPName n -> n
+  | NPIgnore -> Context.freshIgnore cc
 
 and compileProp cc (prop:PropertyExpr) =
   (
@@ -378,7 +400,7 @@ and compileLabel cc label =
 and compileMatchCase cc (c:MatchCase) =
   let locals = patternLocals c.pattern
   let cc1 = Context.extendLocals (Set.ofList locals) cc
-  let ps = List.map jsStr locals
+  let ps = List.map jsId locals
   jsArray [
     compilePattern cc c.pattern
     jsArray (List.map jsStr locals)
@@ -389,10 +411,10 @@ and compileMatchCase cc (c:MatchCase) =
 and compilePattern cc p =
   match p with
   | PBind n -> 
-      pBind (compileNamePattern cc n)
+      pBind (jsStr (compileNamePattern cc n))
 
   | POuterBind (p, n) ->
-      pOuterBind (compilePattern cc p) (compileNamePattern cc n)
+      pOuterBind (compilePattern cc p) (jsStr (compileNamePattern cc n))
   
   | PContract (p, e) ->
       pContract (compilePattern cc p) (compileExpr cc e)
@@ -426,3 +448,10 @@ and compilePropPattern cc (prop:PropertyPattern) =
     compileLabel cc prop.field
     compilePattern cc prop.pattern
   ]
+
+
+//== Generator entry-point
+let generateFile file =
+  let cc = Context.empty
+  let m = compileFile cc file
+  prelude + "\n" + (Js.generateExpr m)

@@ -8,6 +8,7 @@
   "dependencies": {
     "@babel/preset-env": "^7.7.7",
     "ohm-js": "^0.14.0",
+    "prettier": "^1.19.1",
     "yargs": "^15.0.2"
   },
   "devDependencies": {
