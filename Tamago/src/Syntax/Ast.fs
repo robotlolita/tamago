@@ -5,6 +5,21 @@ type File = {
   definitions: Declaration list
 }
 
+and Operator =
+  | OpGreaterOrEqual          // >=
+  | OpGreater                 // >
+  | OpLessOrEqual             // <=
+  | OpLess                    // <
+  | OpEqual                   // ===
+  | OpNotEqual                // =/=
+  | OpComposeLeft             // <<
+  | OpComposeRight            // >>
+  | OpConcat                  // ++
+  | OpPlus                    // +
+  | OpMinus                   // -
+  | OpDivide                  // /
+  | OpTimes                   // *
+
 and Declaration =
   | DImport of Namespace * Alias
   | DRecord of Name * Property list
@@ -149,3 +164,31 @@ let propertyExpr field value : PropertyExpr =
 
 let fresh name =
   FreshBind name
+
+let isBinaryOperator op =
+  match op with
+  | ">="
+  | ">"
+  | "<="
+  | "<"
+  | "==="
+  | "=/="
+  | ">>"
+  | "<<"
+  | "++"
+  | "+"
+  | "-"
+  | "*"
+  | "/" 
+  | "and"
+  | "or" ->
+      true
+  | _ ->
+      false
+
+let isUnaryOperator op =
+  match op with
+  | "not" -> true
+  | _ -> false
+
+let isOperator op = isBinaryOperator op || isUnaryOperator op

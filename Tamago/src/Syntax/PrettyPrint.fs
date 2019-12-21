@@ -114,7 +114,15 @@ and printExpr e =
       @- !"else"
         |- block [printExpr a]
   | EApply (c, a) ->
-      maybeParens c |- tuple (List.map printExpr a)
+      match c with
+      | EVariable n when isBinaryOperator n ->
+          let [a1; a2] = a
+          parens (maybeParens a1 -- text n -- maybeParens a2)
+      | EVariable n when isUnaryOperator n ->
+          let [a] = a
+          parens (text n -- maybeParens a)
+      | _ ->
+          maybeParens c |- tuple (List.map printExpr a)
   | EAssert e ->
       !"assert" -- printExpr e
   | EAssertMatch (a, b) ->
