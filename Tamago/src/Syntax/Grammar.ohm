@@ -113,7 +113,7 @@ Tamago : File {
     | l:PipeExpr "==>" r:PipeExpr     %[ EAssertMatch (l, r) ]%
 
   BinaryExpr =
-    | l:UnaryExpr op:BinaryOp r:UnaryExpr     %[ EApply (EVariable op, [l, r]) ]%
+    | l:UnaryExpr op:BinaryOp r:UnaryExpr     %[ EApply (EVariable op, [l; r]) ]%
     | UnaryExpr
 
   UnaryExpr =
@@ -176,7 +176,7 @@ Tamago : File {
 
   PatternPair =
     | l:Label "=" p:Pattern     %[ propertyPattern l p ]%
-    | n:Name                    %[ propertyPattern (LELabel n) (PBind n) ]%
+    | n:Name                    %[ propertyPattern (LELabel n) (PBind (NPName n)) ]%
 
   Label =
     | "(" e:Expression ")"      %[ LEDynamic e ]%

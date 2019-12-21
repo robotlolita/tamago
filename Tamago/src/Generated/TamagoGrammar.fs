@@ -123,7 +123,7 @@ let private visitor =
        EAssertMatch (l, r) 
               
     "BinaryExpr_alt0" ==> fun (meta:Meta) l op r ->
-       EApply (EVariable op, [l, r]) 
+       EApply (EVariable op, [l; r]) 
               
     "UnaryExpr_alt0" ==> fun (meta:Meta) op s ->
        EApply (EVariable op, [s]) 
@@ -204,7 +204,7 @@ let private visitor =
        propertyPattern l p 
               
     "PatternPair_alt1" ==> fun (meta:Meta) n ->
-       propertyPattern (LELabel n) (PBind n) 
+       propertyPattern (LELabel n) (PBind (NPName n)) 
               
     "Label_alt0" ==> fun (meta:Meta) _0 e _2 ->
        LEDynamic e 
