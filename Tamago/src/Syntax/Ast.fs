@@ -17,7 +17,7 @@ and Declaration =
 
 and Expression =
   | ESequence of Expression * Expression
-  | ELet of Pattern * value:Expression * body:Expression
+  | ELet of NamePattern * value:Expression * body:Expression
   | EMatch of Expression * MatchCase list
   | EIf of test:Expression * consequent:Expression * alternate:Expression
   | EApply of callee:Expression * arguments:Expression list

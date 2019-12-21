@@ -4,10 +4,11 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="FsharpUtils.fs" />
-    <Compile Include="Ast.fs" />
+    <Compile Include="Syntax/Ast.fs" />
     <Compile Include="Syntax/Utils.fs" />
+    <Compile Include="Syntax/PrettyPrint.fs" />
     <Compile Include="Generated/TamagoGrammar.fs" />
-    <Compile Include="PrettyPrint.fs" />
+    <Compile Include="Parsing.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Fable.Core" Version="2.0.1" />

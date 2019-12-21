@@ -96,7 +96,7 @@ and printExpr e =
   | ESequence (a, b) ->
       printExpr a |- !";" |- line (printExpr b)
   | ELet (n, v, b) ->
-      !"let" -- printPattern n -- !"=" -- printExpr v -- !"in"
+      !"let" -- printNamePattern n -- !"=" -- printExpr v -- !"in"
       @- (printExpr b)
   | EMatch (e, cs) ->
       !"match" -- printExpr e -- !"with"
