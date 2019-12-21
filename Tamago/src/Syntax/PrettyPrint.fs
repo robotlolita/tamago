@@ -24,6 +24,8 @@ let flow xs = Flow xs
 let line x = Line x
 let stack xs = flow (List.map line xs)
 let block xs = Block (stack xs)
+let br = line (text "")
+let skipBlock xs = block (intersperse br xs)
 let spread xs = intersperse (text " ") xs
 let between a b x = flow [a; x; b]
 let braces = between (text "{") (text "}")
@@ -42,7 +44,9 @@ let (!) a = text a
 
 let rec printFile (f:File) =
   !"module" -- printNamespace f.``namespace``
-    |- block (List.map printDeclaration f.definitions)
+    |- br
+    |- flow (intersperse br (List.map (printDeclaration >> line) f.definitions))
+
 
 and printDeclaration decl =
   match decl with
@@ -55,17 +59,19 @@ and printDeclaration decl =
         |- block (List.map printCase cs)
       @- !"end"
   | DDefine (n, e) ->
-      !"define" -- text n -- !"=" -- printExpr e
+      !"define" -- text n -- !"="
+        |- block [printExpr e]
   | DModule (n, ds) ->
       !"module" -- text n -- !"is" 
-        |- block (List.map printDeclaration ds)
+        |- skipBlock (List.map printDeclaration ds)
       @- !"end"
   | DTest (d, e) ->
       !"test" -- text d -- !"is"
-        |- printExpr e
+        |- block [printExpr e]
       @- !"end"
   | DFunction (n, ps, e) ->
-      !"function" -- text n -- tuple (List.map printParam ps) -- !"=" -- line (printExpr e)
+      !"function" -- text n -- tuple (List.map printParam ps) -- !"=" 
+        |- block [printExpr e]
   | DMulti (ds) ->
       stack (List.map printDeclaration ds)
 
@@ -104,23 +110,23 @@ and printExpr e =
       @- line !"end"
   | EIf (t, c, a) ->
       !"if" -- printExpr t -- !"then"
-        |- block [(printExpr c)]
+        |- block [printExpr c]
       @- !"else"
-        |- block [(printExpr a)]
+        |- block [printExpr a]
   | EApply (c, a) ->
-      parens (printExpr c) |- tuple (List.map printExpr a)
+      maybeParens c |- tuple (List.map printExpr a)
   | EAssert e ->
       !"assert" -- printExpr e
   | EAssertMatch (a, b) ->
-      parens (printExpr a) -- !"==>" -- parens (printExpr b)
+      maybeParens a -- !"==>" -- maybeParens b
   | ERecord ps ->
       record (List.map printProp ps)
   | EUpdate (r, ps) ->
-      parens (printExpr r) -- record (List.map printProp ps)
+      maybeParens r -- record (List.map printProp ps)
   | EProject (r, l) ->
-      parens (printExpr r) |- !"." |- printLabel l
+      maybeParens r |- !"." |- printLabel l
   | ELambda (ps, e) ->
-      tuple (List.map printParam ps) -- !"=>" -- printExpr e
+      tuple (List.map printParam ps) -- !"=>" -- maybeParens e
   | EVariable n ->
       text n
   | EHole ->
@@ -150,13 +156,13 @@ and printPattern p =
   match p with
   | PBind n -> printNamePattern n
   | POuterBind (p, n) -> printPattern p -- !"as" -- printNamePattern n
-  | PContract (p, e) -> printPattern p -- !"::" -- parens (printExpr e)
+  | PContract (p, e) -> printPattern p -- !"::" -- maybeParens e
   | PLiteral l -> printLiteral l
   | PCons (hd, tl) -> printCons (List.map printPattern hd) (printPattern tl)
   | PList ps -> list (List.map printPattern ps)
   | PTuple ps -> tuple (List.map printPattern ps)
   | PRecord ps -> record (List.map printPropPattern ps)
-  | PExtractor (o, ps) -> parens (printExpr o) -- record (List.map printPropPattern ps)
+  | PExtractor (o, ps) -> maybeParens o -- record (List.map printPropPattern ps)
   | PAnything -> !"_"
 
 and printCons hd tl =
@@ -173,3 +179,15 @@ and printLabel l =
   | LELabel s -> text s
   | LEDynamic e -> parens (printExpr e)
 
+and maybeParens expr =
+  match expr with
+  | EHole
+  | EVariable _
+  | ERecord _
+  | ELiteral _
+  | EList _
+  | ECons _ 
+  | EProject _ ->
+      printExpr expr
+  | _ ->
+      parens (printExpr expr)

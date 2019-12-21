@@ -9,6 +9,7 @@
     <Compile Include="Syntax/PrettyPrint.fs" />
     <Compile Include="Generated/TamagoGrammar.fs" />
     <Compile Include="Parsing.fs" />
+    <Compile Include="Tamago.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Fable.Core" Version="2.0.1" />

@@ -1,6 +1,6 @@
 module Tamago.FsharpUtils
 
-let intersperse sep xs =
+let rec intersperse sep xs =
   match xs with
   | [] -> []
   | [x] -> [x]

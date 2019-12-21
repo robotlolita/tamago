@@ -21,8 +21,8 @@ Tamago : File {
     | TestDef
 
   ImportDef =
-    | use_ ns:Namespace as_ n:Alias
-      %[ DImport (ns, n) ]%
+    | use_ ns:Namespace as_ n:Name
+      %[ DImport (ns, AName n) ]%
 
   UnionDef =
     | union_ n:Name is_ cs:UnionCase+ end_
@@ -83,6 +83,7 @@ Tamago : File {
   SequenceExpr =
     | l:SequenceExpr ";" r:Expression     %[ ESequence (l, r) ]%
     | AssertExpr
+    | LetExpr
 
   LetExpr =
     | let_ p:Pattern "=" v:IfExpr in_ e:Expression    %[ makeLet p v e ]%
@@ -147,7 +148,6 @@ Tamago : File {
     | RecordExpr
     | ListExpr
     | HoleExpr
-    | BreakExpr
     | n:Name                    %[ EVariable n ]%
     | "(" e:ExprWithTuple ")"   %[ e ]%
 

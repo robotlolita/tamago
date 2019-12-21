@@ -60,7 +60,9 @@ let makeApp args (ns, keywords) =
       EApply (projectPath (ns +++ [name]), args)
 
 [<Emit("Number($0)")>]
-let parseNumber s = jsNative
+let parseNumber s : double = jsNative
 
 [<Emit("JSON.parse($0)")>]
-let parseString s = jsNative
+let parseJson s : string = jsNative
+
+let parseString (s:string) = parseJson ((s.Replace("\r\n", "\\n")).Replace("\n", "\\n"))

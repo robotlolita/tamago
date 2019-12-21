@@ -39,7 +39,7 @@ let private visitor =
        file ns (list defs) 
               
     "ImportDef_alt0" ==> fun (meta:Meta) _0 ns _2 n ->
-       DImport (ns, n) 
+       DImport (ns, AName n) 
               
     "UnionDef_alt0" ==> fun (meta:Meta) _0 n _2 cs _4 ->
        DUnion (n, list cs) 
@@ -155,10 +155,10 @@ let private visitor =
     "PrimaryExpr_alt2" ==> fun (meta:Meta) l ->
        ELiteral l 
               
-    "PrimaryExpr_alt7" ==> fun (meta:Meta) n ->
+    "PrimaryExpr_alt6" ==> fun (meta:Meta) n ->
        EVariable n 
               
-    "PrimaryExpr_alt8" ==> fun (meta:Meta) _0 e _2 ->
+    "PrimaryExpr_alt7" ==> fun (meta:Meta) _0 e _2 ->
        e 
               
     "MatchExpr_alt0" ==> fun (meta:Meta) _0 e _2 cs _4 ->
@@ -297,7 +297,7 @@ let private primParser: obj  =
               
       
       ImportDef =
-        | use_ Namespace as_ Alias -- alt0
+        | use_ Namespace as_ Name -- alt0
               
       
       UnionDef =
@@ -364,6 +364,7 @@ let private primParser: obj  =
       SequenceExpr =
         | SequenceExpr ";" Expression -- alt0
         | AssertExpr -- alt1
+        | LetExpr -- alt2
               
       
       LetExpr =
@@ -443,9 +444,8 @@ let private primParser: obj  =
         | RecordExpr -- alt3
         | ListExpr -- alt4
         | HoleExpr -- alt5
-        | BreakExpr -- alt6
-        | Name -- alt7
-        | "(" ExprWithTuple ")" -- alt8
+        | Name -- alt6
+        | "(" ExprWithTuple ")" -- alt7
               
       
       MatchExpr =
