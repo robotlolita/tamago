@@ -140,9 +140,9 @@ and printExpr e =
   | EHole ->
       text "_"
   | ECons (hd, tl) ->
-      printCons (List.map printExpr hd) (printExpr tl)
-  | EList xs ->
-      list (List.map printExpr xs)
+      printCons (printExpr hd) (printExpr tl)
+  | EEmpty ->
+      list []
   | ETuple xs ->
       tuple (List.map printExpr xs)
   | ELiteral l ->
@@ -166,15 +166,15 @@ and printPattern p =
   | POuterBind (p, n) -> printPattern p -- !"as" -- printNamePattern n
   | PContract (p, e) -> printPattern p -- !"::" -- maybeParens e
   | PLiteral l -> printLiteral l
-  | PCons (hd, tl) -> printCons (List.map printPattern hd) (printPattern tl)
-  | PList ps -> list (List.map printPattern ps)
+  | PCons (hd, tl) -> printCons (printPattern hd) (printPattern tl)
+  | PEmpty -> list []
   | PTuple ps -> tuple (List.map printPattern ps)
   | PRecord ps -> record (List.map printPropPattern ps)
   | PExtractor (o, ps) -> maybeParens o -- record (List.map printPropPattern ps)
   | PAnything -> !"_"
 
 and printCons hd tl =
-  brackets (flow [commaSep hd; !" ..."; tl])
+  brackets (flow [hd; !", ..."; tl])
 
 and printPropPattern p =
   printLabel p.field -- !"=" -- printPattern p.pattern
@@ -193,7 +193,7 @@ and maybeParens expr =
   | EVariable _
   | ERecord _
   | ELiteral _
-  | EList _
+  | EEmpty _
   | ECons _ 
   | EProject _ ->
       printExpr expr

@@ -96,7 +96,7 @@ and generateExpr e =
         (generate b)
 
   | JsRecord (ps) ->
-      sprintf "({ %s })"
+      sprintf "{ %s }"
         (String.concat ", " (Seq.map generatePropPair ps))
 
   | JsArray xs ->

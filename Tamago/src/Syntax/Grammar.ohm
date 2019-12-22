@@ -163,8 +163,8 @@ Tamago : File {
     | p:Pattern as_ n:NamePattern                               %[ POuterBind (p, n) ]%
     | p:Pattern "::" m:MemberExpr                               %[ PContract (p, m) ]%
     | l:LiteralExpr                                             %[ PLiteral l ]%
-    | "[" hd:List1<Pattern, ","> "," "..." tl:Pattern "]"       %[ PCons (hd, tl) ]%
-    | "[" ps:List0<Pattern, ","> "]"                            %[ PList ps ]%
+    | "[" hd:List1<Pattern, ","> "," "..." tl:Pattern "]"       %[ patternSpreadToCons hd tl ]%
+    | "[" ps:List0<Pattern, ","> "]"                            %[ patternListToCons ps ]%
     | o:MemberExpr "{" ps:List0<PatternPair, ","> "}"           %[ PExtractor (o, ps) ]%
     | n:NamePattern                                             %[ PBind n ]%
     | "_"                                                       %[ PAnything ]%
@@ -197,8 +197,8 @@ Tamago : File {
     | n:nothing_      %[ LNothing ]%
 
   ListExpr =
-    | "[" hd:List1<Expression, ","> "," "..." tl:Expression "]"     %[ ECons (hd, tl) ]%
-    | "[" xs:List0<Expression, ","> "]"                             %[ EList xs ]%
+    | "[" hd:List1<Expression, ","> "," "..." tl:Expression "]"     %[ listSpreadToCons hd tl ]%
+    | "[" xs:List0<Expression, ","> "]"                             %[ listToCons xs ]%
 
   TupleExpr =
     | hd:Expression "," tl:List1<Expression, ",">                   %[ ETuple (hd :: tl) ]%

@@ -90,10 +90,10 @@ let exForce thunk =
   rt "force" [thunk]
 
 let exCons hd tl =
-  rt "cons" [jsArray hd; tl]
+  rt "cons" [hd; tl]
 
-let exList xs =
-  rt "list" [jsArray xs];
+let exEmpty =
+  rt "empty" [];
 
 let exMatch v cs =
   rt "match" [v; jsArray cs]
@@ -111,10 +111,10 @@ let pEqual l =
   prt "equal" [l]
 
 let pCons hd tl =
-  prt "cons" [jsArray hd; tl]
+  prt "cons" [hd; tl]
 
-let pList xs =
-  prt "list" [jsArray xs]
+let pEmpty =
+  prt "empty" []
 
 let pTuple xs =
   prt "tuple" [jsArray xs]
@@ -176,10 +176,10 @@ let rec patternLocals p =
       []
 
   | PCons (hd, tl) ->
-      List.append (List.collect patternLocals hd) (patternLocals tl)
+      List.append (patternLocals hd) (patternLocals tl)
 
-  | PList ps ->
-      List.collect patternLocals ps
+  | PEmpty ->
+      []
 
   | PTuple ps ->
       List.collect patternLocals ps
@@ -347,11 +347,11 @@ and compileExpr cc e =
 
   | ECons (hd, tl) ->
       exCons
-        (List.map (compileExpr cc) hd)
+        (compileExpr cc hd)
         (compileExpr cc tl)
   
-  | EList xs ->
-      exList (List.map (compileExpr cc) xs)
+  | EEmpty ->
+      exEmpty
 
   | ETuple xs ->
       jsArray (List.map (compileExpr cc) xs)
@@ -427,11 +427,11 @@ and compilePattern cc p =
 
   | PCons (hd, tl) ->
       pCons
-        (List.map (compilePattern cc) hd)
+        (compilePattern cc hd)
         (compilePattern cc tl)
 
-  | PList xs ->
-      pList (List.map (compilePattern cc) xs)
+  | PEmpty ->
+      pEmpty
 
   | PTuple xs ->
       pTuple (List.map (compilePattern cc) xs)

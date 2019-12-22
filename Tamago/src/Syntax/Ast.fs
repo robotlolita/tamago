@@ -31,6 +31,7 @@ and Declaration =
   | DMulti of Declaration list
 
 and Expression =
+  | ESymbol of string
   | ESequence of Expression * Expression
   | ELet of NamePattern * value:Expression * body:Expression
   | EMatch of Expression * MatchCase list
@@ -44,8 +45,8 @@ and Expression =
   | ELambda of Parameter list * Expression
   | EVariable of Name
   | EHole
-  | ECons of head:Expression list * tail:Expression
-  | EList of Expression list
+  | ECons of head:Expression * tail:Expression
+  | EEmpty
   | ETuple of Expression list
   | ELiteral of Literal
 
@@ -88,8 +89,8 @@ and Pattern =
   | POuterBind of Pattern * NamePattern
   | PContract of Pattern * Expression
   | PLiteral of Literal
-  | PCons of head:Pattern list * tail:Pattern
-  | PList of Pattern list
+  | PCons of head:Pattern * tail:Pattern
+  | PEmpty
   | PTuple of Pattern list
   | PRecord of PropertyPattern list
   | PExtractor of object:Expression * PropertyPattern list

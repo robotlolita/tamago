@@ -59,6 +59,22 @@ let makeApp args (ns, keywords) =
   | Some ns ->
       EApply (projectPath (ns +++ [name]), args)
 
+let cons a b = ECons (a, b)
+
+let listSpreadToCons hd tl =
+  List.foldBack cons tl hd
+
+let listToCons xs =
+  List.foldBack cons xs EEmpty
+
+let pcons a b = PCons (a, b)
+
+let patternSpreadToCons hd tl =
+  List.foldBack pcons hd tl
+
+let patternListToCons xs =
+  List.foldBack pcons xs PEmpty
+
 [<Emit("Number($0)")>]
 let parseNumber s : double = jsNative
 

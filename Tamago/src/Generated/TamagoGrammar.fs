@@ -180,10 +180,10 @@ let private visitor =
        PLiteral l 
               
     "Pattern_alt3" ==> fun (meta:Meta) _0 hd _2 _3 tl _5 ->
-       PCons (hd, tl) 
+       patternSpreadToCons hd tl 
               
     "Pattern_alt4" ==> fun (meta:Meta) _0 ps _2 ->
-       PList ps 
+       patternListToCons ps 
               
     "Pattern_alt5" ==> fun (meta:Meta) o _1 ps _3 ->
        PExtractor (o, ps) 
@@ -222,10 +222,10 @@ let private visitor =
        LNothing 
               
     "ListExpr_alt0" ==> fun (meta:Meta) _0 hd _2 _3 tl _5 ->
-       ECons (hd, tl) 
+       listSpreadToCons hd tl 
               
     "ListExpr_alt1" ==> fun (meta:Meta) _0 xs _2 ->
-       EList xs 
+       listToCons xs 
               
     "TupleExpr_alt0" ==> fun (meta:Meta) hd _1 tl ->
        ETuple (hd :: tl) 
