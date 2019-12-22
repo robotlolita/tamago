@@ -52,7 +52,7 @@ let defUnion name cases =
   ]
 
 let defTest desc expr =
-  mrt "define_test" [desc; expr]
+  mrt "define_test" [desc; jsAnonFun [] [jsReturn expr]]
 
 let defSubMod name defs =
   mrt "define_module" [
@@ -66,7 +66,7 @@ let defFun name ps body =
   ]
 
 let thunk e =
-  rt "thunk" [e]
+  rt "thunk" [jsAnonFun [] [jsReturn e]]
 
 let exAssert e =
   rt "assert" [e]
@@ -210,7 +210,7 @@ let moduleId xs = String.concat "." xs
 let detectHole cc expr =
   match expr with
   | EHole ->
-      let b = Context.fresh cc (fresh "_")
+      let b = Context.fresh cc (fresh "$")
       ([b], EVariable b)
   | _ ->
       ([], expr)
@@ -241,7 +241,7 @@ let holesToLambda cc expr =
 //== Generator primitives
 let prelude =
   """
- const $rt = Tamago.make_runtime(__dirname, __filename, require);
+ const $rt = Tamago.make_runtime(__dirname, __filename, require, module);
  const $pattern = $rt.pattern;
  const $gte = $rt.builtin.gte;
  const $gt = $rt.builtin.gt;
@@ -269,7 +269,7 @@ let rec compileFile cc (file:File) =
 and compileDeclaration cc decl =
   match decl with
   | DImport (ns, a) ->
-      jsConst (compileAlias cc a) (useMod <| moduleId ns)
+      jsConst (compileAlias cc a) (moduleId ns |> useMod |> thunk)
 
   | DRecord (n, ps) ->
       jsMulti [
