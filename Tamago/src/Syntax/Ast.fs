@@ -31,7 +31,6 @@ and Declaration =
   | DMulti of Declaration list
 
 and Expression =
-  | ESymbol of string
   | ESequence of Expression * Expression
   | ELet of NamePattern * value:Expression * body:Expression
   | EMatch of Expression * MatchCase list

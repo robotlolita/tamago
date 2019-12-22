@@ -207,6 +207,36 @@ let includeModuleLocals cc defs =
 //== Helpers
 let moduleId xs = String.concat "." xs
 
+let detectHole cc expr =
+  match expr with
+  | EHole ->
+      let b = Context.fresh cc (fresh "_")
+      ([b], EVariable b)
+  | _ ->
+      ([], expr)
+
+let detectHoles cc exprs =
+  let pairs = List.map (detectHole cc) exprs
+  let (holes, exprs) = List.unzip pairs
+  (List.concat holes, exprs)
+
+let holeToParam hole =
+  parameter (NPName hole)
+
+let holesToLambda cc expr =
+  match expr with
+  | EApply (c, args) ->
+      let (cHoles, c) = detectHole cc c
+      let (argsHoles, args) = detectHoles cc args
+      let holes = List.append cHoles argsHoles
+      if List.isEmpty holes then
+        EApply (c, args)
+      else
+        let ps = List.map holeToParam holes
+        ELambda (ps, (EApply (c, args)))
+  
+  | _ -> expr
+
 
 //== Generator primitives
 let prelude =
@@ -288,7 +318,7 @@ and compileDeclaration cc decl =
       jsMulti (List.map (compileDeclaration cc) xs)
 
 and compileExpr cc e =
-  match e with
+  match holesToLambda cc e with // TODO: move to a separate pass
   | ESequence (l, r) ->
       jsComma (compileExpr cc l) (compileExpr cc r)
 
