@@ -91,7 +91,7 @@ and generateExpr e =
 
   | JsFun (n, ps, b) ->
       sprintf "(function %s(%s) { %s })"
-        n
+        (toSafeId n)
         (generateExprList ps)
         (generate b)
 
