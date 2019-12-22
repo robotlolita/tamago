@@ -9,12 +9,15 @@ const args = require('yargs')
   .command('format <file>', 'Formats <file>', {})
   .command('compile <file>', 'Compiles <file>', {})
   .command('run <id>', 'Runs module <id>', {})
+  .command('test', 'Runs tests', {})
   .help()
   .version()
   .demandCommand(1)
   .argv;
 
 const read = (f) => fs.readFileSync(f, 'utf8');
+
+const write = (f, d) => fs.writeFileSync(f, d, 'utf8');
 
 const compileFile = (file) => {
   const source = read(file);
@@ -25,7 +28,7 @@ const compileFile = (file) => {
 };
 
 const projectFiles = (cwd) => {
-  return glob.sync('**/*.tamago', {
+  return glob.sync('**/*.tamago.js', {
     cwd: cwd,
     absolute: true
   });
@@ -34,10 +37,6 @@ const projectFiles = (cwd) => {
 const prepare = (cwd) => {
   const runtime = require('./runtime');
   const Tamago = global.Tamago = new runtime.TamagoRuntime();
-  require.extensions['.tamago'] = (Module, filename) => {
-    const js = compileFile(filename);
-    Module._compile(js, filename);
-  }
   for (const file of projectFiles(process.cwd())) {
     require(file);
   }
@@ -55,7 +54,10 @@ switch (args._[0]) {
   }
 
   case 'compile': {
-    console.log(compileFile(args.file));
+    const target = args.file + '.js';
+    const js = compileFile(args.file);
+    write(target, js);
+    console.log(args.file, '->', target);
     break;
   }
 

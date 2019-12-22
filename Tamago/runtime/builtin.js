@@ -1,0 +1,16 @@
+exports.gte = (a, b) => a >= b;
+exports.gt = (a, b) => a > b;
+exports.lte = (a, b) => a <= b;
+exports.lt = (a, b) => a < b;
+exports.eq = (a, b) => a === b;
+exports.neq = (a, b) => a !== b;
+exports.composer = (a, b) => (x) => b(a(x));
+exports.composel = (a, b) => (x) => a(b(x));
+exports.concat = (a, b) => a.concat(b);
+exports.plus = (a, b) => a + b;
+exports.minus = (a, b) => a - b;
+exports.times = (a, b) => a * b;
+exports.divide = (a, b) => a / b;
+exports.and = (a, b) => a && b;
+exports.or = (a, b) => a || b;
+exports.not = (a) => !a;

@@ -5,7 +5,7 @@ const { TamagoRecord, TamagoAnonymousRecord } = require('./record');
 function match(value, cases) {
   for (const [pattern, guard, body] of cases) {
     const binds = pattern(value);
-    if (binds == null || guard(binds)) {
+    if (binds == null || !guard(binds)) {
       continue;
     }
     return body(binds);

@@ -19,3 +19,7 @@ where
   8 fib ==> 21;
   9 fib ==> 34;
   10 fib ==> 55
+
+
+function main: _ =
+  10 fib

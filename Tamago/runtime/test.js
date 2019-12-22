@@ -11,10 +11,10 @@ class TestCase {
     const fn = this._test;
     try {
       fn();
-      console.log(`[OK] ${test.description}`);
+      console.log(`[OK] ${this._description}`);
       return 0;
     } catch (error) {
-      console.log(`[ERROR] ${test.module} - ${test.description}`);
+      console.log(`[ERROR] ${this._description}`);
       console.log(error.stack);
       console.log("---");
       return 1;

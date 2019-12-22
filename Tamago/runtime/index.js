@@ -4,6 +4,7 @@ const { TamagoModule } = require('./module');
 const { TamagoAnonymousRecord } = require('./record');
 const { empty, Cons } = require('./list');
 const { match, patterns } = require('./match');
+const builtin = require('./builtin');
 
 class TamagoRuntime {
   constructor() {
@@ -35,10 +36,12 @@ class TamagoRuntime {
 
   assert(expr) {
     assert(expr, "Assertion failed");
+    return null;
   }
 
   assert_match(left, right) {
-    assert(equals(left, right), `Assertion failed: ${left} ==> ${right}`);
+    assert(builtin.eq(left, right), `Assertion failed: ${left} ==> ${right}`);
+    return null;
   }
 
   record(fields) {
@@ -47,9 +50,9 @@ class TamagoRuntime {
   }
 
   check_arity(n, f) {
-    return function(arguments) {
-      assert(arguments.length === n, `Invalid arity: expected ${n}, got ${arguments.length}`);
-      return f(...arguments);
+    return function(...args) {
+      assert(args.length === n, `Invalid arity: expected ${n}, got ${args.length}`);
+      return f(...args);
     }
   }
 
@@ -83,6 +86,37 @@ class TamagoRuntime {
 
   get pattern() {
     return patterns;
+  }
+
+  get builtin() {
+    return builtin;
+  }
+
+  make_runtime(dirname, filename, require, module) {
+    return new TamagoModuleRuntime(this, dirname, filename, require, module);
+  }
+}
+
+class TamagoModuleRuntime {
+  constructor(rt, dirname, filename, require, module) {
+    this._runtime = rt;
+    this._dirname = dirname;
+    this._filename = filename;
+    this._require = require;
+    this._module = module;
+  }
+}
+
+for (const key of Reflect.ownKeys(TamagoRuntime.prototype)) {
+  if (key in TamagoModuleRuntime || ['constructor'].includes(key)) {
+    continue;
+  }
+  if (typeof TamagoRuntime.prototype[key] === "function") {
+    TamagoModuleRuntime.prototype[key] = function(...args) {
+      return this._runtime[key](...args);
+    }
+  } else {
+    TamagoModuleRuntime.prototype[key] = TamagoRuntime.prototype[key];
   }
 }
 
