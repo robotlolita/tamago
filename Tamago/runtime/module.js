@@ -46,12 +46,26 @@ class TamagoModule {
   toString() {
     return `TamagoModule<${this._id}>`;
   }
+
+  run_tests() {
+    let errors = 0;
+    console.log(`\n${this._id}\n---`);
+    for (const test of this._tests) {
+      errors += test.run();
+    }
+    for (const value of this._bindings.values()) {
+      if (value instanceof TamagoSubmodule) {
+        value.run_tests();
+      }
+    }
+    return errors;
+  }
 }
 
 
 class TamagoSubmodule extends TamagoModule {
   constructor(parent, name) {
-    super(parent._id);
+    super(parent._id + "/" + name);
     this._parent = parent;
     this._name = name;
   }

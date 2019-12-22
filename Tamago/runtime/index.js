@@ -73,9 +73,19 @@ class TamagoRuntime {
     }
   }
 
+  run_tests() {
+    let errors = 0;
+    for (const module of this._modules.values()) {
+      errors += module.run_tests();
+    }
+    return errors;
+  }
+
   get pattern() {
     return patterns;
   }
 }
 
-module.exports = TamagoRuntime;
+module.exports = {
+  TamagoRuntime
+};
