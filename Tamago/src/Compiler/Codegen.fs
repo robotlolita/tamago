@@ -25,7 +25,7 @@ let defMod id defs =
   ]
 
 let useMod id =
-  mrt "import_module" [jsStr id]
+  rt "import_module" [jsStr id]
 
 let expose name expr =
   mrt "expose" [jsStr name; expr]
@@ -102,10 +102,10 @@ let pBind n =
   prt "bind" [n]
 
 let pOuterBind p n =
-  prt "outer_bind" [p; n]
+  prt "bind_as" [p; n]
 
 let pContract p e =
-  prt "contract" [p; e]
+  prt "check" [p; e]
 
 let pEqual l =
   prt "equal" [l]
