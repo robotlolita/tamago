@@ -1,0 +1,130 @@
+% module: tamago
+module tamago.prelude
+
+use external "./prelude.js" as P
+
+//== Contracts
+define Float = P.makeType("Float", P.isFloat)
+define Integer = P.makeType("Integer", P.isInteger)
+define Text = P.makeType("Text", P.isString)
+define Nothing = P.makeType("Nothing", P.isNothing)
+define Record = P.makeType("Record", P.isRecord)
+define Function = P.makeType("Function", P.isFunction)
+define Symbol = P.makeType("Symbol", P.isSymbol)
+define Tuple = P.makeType("Tuple", P.isTuple)
+define Object = P.makeType("Object", (x) => P.typeOf(x) === "object")
+define Any = P.makeType("Any", (_) => true)
+
+//== Equality
+define a === b =
+  match (a, b) with
+  | [],         []          => true
+  | [x, ...xs], [y, ...ys]  => (x === y) and (xs === ys)
+  | _,          _           => P.opEq(a, b)
+  end
+
+define a =/= b =
+  match (a, b) with
+  | _ :: Float, _ :: Float => P.opNeq(a, b)
+  | _,          _          => not (a === b)
+  end
+
+//== Ordering
+define a >= b = P.opGte(a, b)
+define a > b = P.opGt(a, b)
+define a <= b = P.opLte(a, b)
+define a < b = P.opLt(a, b)
+
+//== Arithmetic
+define a + b = P.opPlus(a, b)
+define a - b = P.opMinus(a, b)
+define a / b = P.opDivide(a, b)
+define a * b = P.opTimes(a, b)
+
+//== Boolean logic
+define a and b = P.opAnd(a, b)
+define a or b = P.opOr(a, b)
+define not a = P.opNot(a)
+
+//== Conversions
+function self to-float =
+  match self with
+  | _ :: Float => self
+  | _ :: Integer => P.integerToFloat(self)
+  end
+
+//== Tuples
+function tuple at: index = P.tupleAt(tuple, index)
+function tuple size = P.tupleSize(tuple)
+function tuple first = tuple at: 1.0
+function tuple second = tuple at: 2.0
+function tuple last = tuple at: tuple size
+
+//== Lists
+function list head =
+  match list with
+  | [x, ..._] => x
+  end
+
+function list tail =
+  match list with
+  | [_, ...xs] => xs
+  | [] => []
+  end
+
+function list at: index =
+  match list with
+  | [x, ..._] when index === 1 => x
+  | [_, ...xs] => xs at: index - 1
+  end
+
+function left zip: right with: combine =>
+  match (left, right) with
+  | [x, ...xs], [y, ...ys] => [combine(x, y), ...xs zip: ys with: combine]
+  | [],         []         => []
+  end
+
+function left zip: right = left zip: right with: ((x, y) => [x, y])
+
+function list from: initial fold: combine = P.listFold(list, initial, combine)
+
+function list map: transform =
+  match list with
+  | [x, ...xs] => [transform(x), ...xs map: transform]
+  | [] => []
+  end
+
+function list filter: predicate =
+  match list with
+  | [x, ...xs] => if predicate(x) then [x, ...xs filter: predicate]
+                  else xs filter: predicate
+  | [] => []
+  end
+
+function left ++ right =
+  match (left, right) with
+  | [x, ...xs],  _          => [x, ...xs ++ right]
+  | [],         (_ :: List) => right
+  end
+
+function list flat-map: transform =
+  match list with
+  | [x, ...xs] => transform(x) ++ (xs flat-map: transform)
+  | [] => []
+  end
+
+function list intersperse: separator =
+  match list with
+  | [x1, x2, ...xs] => [x1, separator, ...[x2, ...xs] intersperse: separator]
+  | [x] => [x]
+  | [] => []
+  end
+
+function list is-empty =
+  match list with
+  | [] => true
+  | [_, ..._] => false
+  end
+
+function list length = list from: 0.0 fold: _ + _
+
