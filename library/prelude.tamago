@@ -87,47 +87,47 @@ function left zip: right with: combine =
   | [],         []         => []
   end
 
-function left zip: right = left zip: right with: ((x, y) => [x, y])
+// function left zip: right = left zip: right with: ((x, y) => [x, y])
 
-function list from: initial fold: combine = P.listFold(list, initial, combine)
+// function list from: initial fold: combine = P.listFold(list, initial, combine)
 
-function list map: transform =
-  match list with
-  | [x, ...xs] => [transform(x), ...xs map: transform]
-  | [] => []
-  end
+// function list map: transform =
+//   match list with
+//   | [x, ...xs] => [transform(x), ...xs map: transform]
+//   | [] => []
+//   end
 
-function list filter: predicate =
-  match list with
-  | [x, ...xs] => if predicate(x) then [x, ...xs filter: predicate]
-                  else xs filter: predicate
-  | [] => []
-  end
+// function list filter: predicate =
+//   match list with
+//   | [x, ...xs] => if predicate(x) then [x, ...xs filter: predicate]
+//                   else xs filter: predicate
+//   | [] => []
+//   end
 
-function left ++ right =
-  match left, right with
-  | [x, ...xs],  _          => [x, ...xs ++ right]
-  | [],         (_ :: List) => right
-  end
+// function left ++ right =
+//   match left, right with
+//   | [x, ...xs],  _          => [x, ...xs ++ right]
+//   | [],         (_ :: List) => right
+//   end
 
-function list flat-map: transform =
-  match list with
-  | [x, ...xs] => transform(x) ++ (xs flat-map: transform)
-  | [] => []
-  end
+// function list flat-map: transform =
+//   match list with
+//   | [x, ...xs] => transform(x) ++ (xs flat-map: transform)
+//   | [] => []
+//   end
 
-function list intersperse: separator =
-  match list with
-  | [x1, x2, ...xs] => [x1, separator, ...[x2, ...xs] intersperse: separator]
-  | [x] => [x]
-  | [] => []
-  end
+// function list intersperse: separator =
+//   match list with
+//   | [x1, x2, ...xs] => [x1, separator, ...[x2, ...xs] intersperse: separator]
+//   | [x] => [x]
+//   | [] => []
+//   end
 
-function list is-empty =
-  match list with
-  | [] => true
-  | [_, ..._] => false
-  end
+// function list is-empty =
+//   match list with
+//   | [] => true
+//   | [_, ..._] => false
+//   end
 
-function list length = list from: 0.0 fold: _ + _
+// function list length = list from: 0.0 fold: _ + _
 

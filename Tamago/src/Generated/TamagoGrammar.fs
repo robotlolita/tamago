@@ -75,7 +75,7 @@ let private visitor =
        (op, [n]) 
               
     "Signature_alt1" ==> fun (meta:Meta) l op r ->
-       (op, [l, r]) 
+       (op, [l; r]) 
               
     "Signature_alt2" ==> fun (meta:Meta) n kws ->
        makeSig [n] kws 

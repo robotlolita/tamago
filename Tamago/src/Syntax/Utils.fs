@@ -62,7 +62,7 @@ let makeApp args (ns, keywords) =
 let cons a b = ECons (a, b)
 
 let listSpreadToCons hd tl =
-  List.foldBack cons tl hd
+  List.foldBack cons hd tl
 
 let listToCons xs =
   List.foldBack cons xs EEmpty

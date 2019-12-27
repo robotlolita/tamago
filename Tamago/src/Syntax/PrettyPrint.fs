@@ -162,7 +162,7 @@ and printLiteral l =
 
 and printMatchCase mc =
   !"|" -- printPattern mc.pattern -- !"when" -- printExpr mc.guard -- !"=>"
-    |- block [(printExpr mc.body)]
+    |- block [printExpr mc.body]
 
 and printPattern p =
   match p with

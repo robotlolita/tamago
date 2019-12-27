@@ -65,7 +65,7 @@ Tamago : File {
 
   Signature =
     | op:PrefixOp n:Param                       %[ (op, [n]) ]%
-    | l:Param op:BinaryOp r:Param               %[ (op, [l, r]) ]%
+    | l:Param op:BinaryOp r:Param               %[ (op, [l; r]) ]%
     | n:Param kws:KeywordParams                 %[ makeSig [n] kws ]%
     | kws:KeywordParams                         %[ makeSig [] kws ]%
     | s:Param n:Name                            %[ (n, [s]) ]%
