@@ -64,10 +64,10 @@ Tamago : File {
       %[ DTest (s, e) ]%
 
   Signature =
+    | op:PrefixOp n:Param                       %[ (op, [n]) ]%
+    | l:Param op:BinaryOp r:Param               %[ (op, [l, r]) ]%
     | n:Param kws:KeywordParams                 %[ makeSig [n] kws ]%
     | kws:KeywordParams                         %[ makeSig [] kws ]%
-    | l:Param op:BinaryOp r:Param               %[ (op, [l, r]) ]%
-    | op:PrefixOp n:Param                       %[ (op, [n]) ]%
     | s:Param n:Name                            %[ (n, [s]) ]%
 
   Param =
@@ -164,8 +164,8 @@ Tamago : File {
       %[ EMatch (e, list cs) ]%
 
   MatchCase =
-    | "|" p:Pattern when_ g:Expression "=>" e:Expression    %[ matchCase p g e ]%
-    | "|" p:Pattern "=>" e:Expression                       %[ matchCase0 p e ]%
+    | "|" p:GroupPattern when_ g:Expression "=>" e:Expression    %[ matchCase p g e ]%
+    | "|" p:GroupPattern "=>" e:Expression                       %[ matchCase0 p e ]%
 
   Pattern =
     | p:Pattern as_ n:NamePattern                               %[ POuterBind (p, n) ]%

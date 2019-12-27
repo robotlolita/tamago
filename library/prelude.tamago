@@ -1,4 +1,4 @@
-% module: tamago
+% language: tamago
 module tamago.prelude
 
 use external "./prelude.js" as P
@@ -16,35 +16,35 @@ define Object = P.makeType("Object", (x) => P.typeOf(x) === "object")
 define Any = P.makeType("Any", (_) => true)
 
 //== Equality
-define a === b =
-  match (a, b) with
+function a === b =
+  match a, b with
   | [],         []          => true
   | [x, ...xs], [y, ...ys]  => (x === y) and (xs === ys)
   | _,          _           => P.opEq(a, b)
   end
 
-define a =/= b =
-  match (a, b) with
+function a =/= b =
+  match a, b with
   | _ :: Float, _ :: Float => P.opNeq(a, b)
   | _,          _          => not (a === b)
   end
 
 //== Ordering
-define a >= b = P.opGte(a, b)
-define a > b = P.opGt(a, b)
-define a <= b = P.opLte(a, b)
-define a < b = P.opLt(a, b)
+function a >= b = P.opGte(a, b)
+function a > b = P.opGt(a, b)
+function a <= b = P.opLte(a, b)
+function a < b = P.opLt(a, b)
 
 //== Arithmetic
-define a + b = P.opPlus(a, b)
-define a - b = P.opMinus(a, b)
-define a / b = P.opDivide(a, b)
-define a * b = P.opTimes(a, b)
+function a + b = P.opPlus(a, b)
+function a - b = P.opMinus(a, b)
+function a / b = P.opDivide(a, b)
+function a * b = P.opTimes(a, b)
 
 //== Boolean logic
-define a and b = P.opAnd(a, b)
-define a or b = P.opOr(a, b)
-define not a = P.opNot(a)
+function a and b = P.opAnd(a, b)
+function a or b = P.opOr(a, b)
+function not a = P.opNot(a)
 
 //== Conversions
 function self to-float =
@@ -81,8 +81,8 @@ function list at: index =
   | [_, ...xs] => xs at: index - 1
   end
 
-function left zip: right with: combine =>
-  match (left, right) with
+function left zip: right with: combine =
+  match left, right with
   | [x, ...xs], [y, ...ys] => [combine(x, y), ...xs zip: ys with: combine]
   | [],         []         => []
   end
@@ -105,7 +105,7 @@ function list filter: predicate =
   end
 
 function left ++ right =
-  match (left, right) with
+  match left, right with
   | [x, ...xs],  _          => [x, ...xs ++ right]
   | [],         (_ :: List) => right
   end

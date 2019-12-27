@@ -71,17 +71,17 @@ let private visitor =
     "TestDef_alt0" ==> fun (meta:Meta) _0 s _2 e _4 ->
        DTest (s, e) 
               
-    "Signature_alt0" ==> fun (meta:Meta) n kws ->
-       makeSig [n] kws 
+    "Signature_alt0" ==> fun (meta:Meta) op n ->
+       (op, [n]) 
               
-    "Signature_alt1" ==> fun (meta:Meta) kws ->
-       makeSig [] kws 
-              
-    "Signature_alt2" ==> fun (meta:Meta) l op r ->
+    "Signature_alt1" ==> fun (meta:Meta) l op r ->
        (op, [l, r]) 
               
-    "Signature_alt3" ==> fun (meta:Meta) op n ->
-       (op, [n]) 
+    "Signature_alt2" ==> fun (meta:Meta) n kws ->
+       makeSig [n] kws 
+              
+    "Signature_alt3" ==> fun (meta:Meta) kws ->
+       makeSig [] kws 
               
     "Signature_alt4" ==> fun (meta:Meta) s n ->
        (n, [s]) 
@@ -348,10 +348,10 @@ let private primParser: obj  =
               
       
       Signature =
-        | Param KeywordParams -- alt0
-        | KeywordParams -- alt1
-        | Param BinaryOp Param -- alt2
-        | PrefixOp Param -- alt3
+        | PrefixOp Param -- alt0
+        | Param BinaryOp Param -- alt1
+        | Param KeywordParams -- alt2
+        | KeywordParams -- alt3
         | Param Name -- alt4
               
       
@@ -468,8 +468,8 @@ let private primParser: obj  =
               
       
       MatchCase =
-        | "|" Pattern when_ Expression "=>" Expression -- alt0
-        | "|" Pattern "=>" Expression -- alt1
+        | "|" GroupPattern when_ Expression "=>" Expression -- alt0
+        | "|" GroupPattern "=>" Expression -- alt1
               
       
       Pattern =
