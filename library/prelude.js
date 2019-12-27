@@ -199,6 +199,10 @@ class Prelude {
     };
   }
 
+  makeSymbol(desc) {
+    return Symbol(desc);
+  }
+
   $project(field) {
     if (Prelude.prototype.hasOwnProperty(field)) {
       return Prelude.prototype[field];

@@ -53,6 +53,9 @@ function self to-float =
   | _ :: Integer => P.integerToFloat(self)
   end
 
+//== Symbols
+function symbol: description = P.makeSymbol(description)
+
 //== Tuples
 function tuple at: index = P.tupleAt(tuple, index)
 function tuple size = P.tupleSize(tuple)
