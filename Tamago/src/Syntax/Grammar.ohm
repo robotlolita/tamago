@@ -13,6 +13,7 @@ Tamago : File {
 
   Definition =
     | ImportDef
+    | OpenDef
     | RecordDef
     | UnionDef
     | FunctionDef
@@ -23,6 +24,13 @@ Tamago : File {
   ImportDef =
     | use_ ns:Namespace as_ n:Name
       %[ DImport (ns, AName n) ]%
+
+    | use_ external_ s:string as_ n:Name
+      %[ DFFI (s, AName n) ]%
+
+  OpenDef =
+    | open_ e:Expression
+      %[ DOpen (e) ]%
 
   UnionDef =
     | union_ n:Name is_ cs:UnionCase+ end_
@@ -221,7 +229,7 @@ Tamago : File {
   Float = f:float             %[ LFloat (parseNumber f) ]%
   Integer = i:integer         %[ LInteger i ]%
   Boolean = b:boolean         %[ LBoolean b ]%
-  String = s:double_string    %[ LString (parseString s) ]%
+  String = s:string           %[ LString s ]%
 
   List1<A, B> = x:NonemptyListOf<A, B>  %[ list x ]%
   List0<A, B> = x:ListOf<A, B>          %[ list x ]%
@@ -263,6 +271,9 @@ Tamago : File {
 
   double_string =
     | "\"" string_character* "\""
+
+  string =
+    | s:double_string     %[ parseString s ]%
 
 
   binary_op =
@@ -314,6 +325,7 @@ Tamago : File {
   break_ = kw<"break">
   union_ = kw<"union">
   is_ = kw<"is">
+  open_ = kw<"open">
 
   reserved =
     | use_ | as_ | record_ | module_
@@ -324,5 +336,5 @@ Tamago : File {
     | external_ | match_ | with_ | when_
     | test_ | for_ | function_ | process_
     | where_ | yield_ | all_ | break_
-    | union_ | is_
+    | union_ | is_ | open_
 }

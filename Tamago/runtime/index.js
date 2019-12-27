@@ -1,15 +1,28 @@
 const { assert } = require('./assert');
-const { force, delay } = require('./thunk');
-const { TamagoModule } = require('./module');
-const { TamagoAnonymousRecord } = require('./record');
+const { force, delay, Thunk } = require('./thunk');
+const { TamagoModule, TamagoSubmodule } = require('./module');
+const { TamagoAnonymousRecord, TamagoRecord, TamagoUnion, TamagoRecordInstance } = require('./record');
 const { empty, Cons } = require('./list');
 const { match, patterns } = require('./match');
-const builtin = require('./builtin');
 
 class TamagoRuntime {
   constructor() {
     this._modules = new Map();
     this._pending = [];
+  }
+
+  get primordials() {
+    return {
+      empty,
+      Cons,
+      Thunk,
+      TamagoModule,
+      TamagoSubmodule,
+      TamagoAnonymousRecord,
+      TamagoRecord,
+      TamagoUnion,
+      TamagoRecordInstance
+    };
   }
 
   define_module(id, init) {
@@ -104,6 +117,11 @@ class TamagoModuleRuntime {
     this._filename = filename;
     this._require = require;
     this._module = module;
+  }
+
+  import_external(id) {
+    const trequire = this._require;
+    return trequire(id);
   }
 }
 

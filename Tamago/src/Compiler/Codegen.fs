@@ -27,6 +27,9 @@ let defMod id defs =
 let useMod id =
   rt "import_module" [jsStr id]
 
+let useExternal id =
+  rt "import_external" [jsStr id]
+
 let expose name expr =
   mrt "expose" [jsStr name; expr]
 
@@ -64,6 +67,9 @@ let defFun name ps body =
   jsFun name ps [
     jsReturn body
   ]
+
+let rtOpen object =
+  mrt "open" [object]
 
 let thunk e =
   rt "thunk" [jsAnonFun [] [jsReturn e]]
@@ -133,6 +139,9 @@ let rec defLocals def =
   match def with
   | DImport (_, AName n) -> [n]
   | DImport _ -> []
+  | DFFI (_, AName n) -> [n]
+  | DFFI _ -> []
+  | DOpen _ -> []
   | DRecord (n, _) -> [n]
   | DUnion (n, _) -> [n]
   | DDefine (n, _) -> [n]
@@ -145,6 +154,9 @@ let rec defLazyLocals def =
   match def with
   | DImport (_, AName n) -> [n]
   | DImport _ -> []
+  | DFFI (_, AName n) -> [n]
+  | DFFI _ -> []
+  | DOpen _ -> []
   | DRecord (n, _) -> []
   | DUnion (n, _) -> []
   | DDefine (n, _) -> [n]
@@ -243,22 +255,6 @@ let prelude =
   """
  const $rt = Tamago.make_runtime(__dirname, __filename, require, module);
  const $pattern = $rt.pattern;
- const $gte = $rt.builtin.gte;
- const $gt = $rt.builtin.gt;
- const $lte = $rt.builtin.lte;
- const $lt = $rt.builtin.lt;
- const $eq = $rt.builtin.eq;
- const $neq = $rt.builtin.neq;
- const $composer = $rt.builtin.composer;
- const $composel = $rt.builtin.composel;
- const $concat = $rt.builtin.concat;
- const $plus = $rt.builtin.plus;
- const $minus = $rt.builtin.minus;
- const $times = $rt.builtin.times;
- const $divide = $rt.builtin.divide;
- const $and = $rt.builtin.and;
- const $or = $rt.builtin.or;
- const $not = $rt.builtin.not;
   """
 
 let rec compileFile cc (file:File) =
@@ -270,6 +266,12 @@ and compileDeclaration cc decl =
   match decl with
   | DImport (ns, a) ->
       jsConst (compileAlias cc a) (moduleId ns |> useMod |> thunk)
+
+  | DFFI (s, n) ->
+      jsConst (compileAlias cc n) (useExternal s)
+
+  | DOpen (e) ->
+      jsExpr <| rtOpen (compileExpr cc e)
 
   | DRecord (n, ps) ->
       jsMulti [

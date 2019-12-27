@@ -41,6 +41,12 @@ let private visitor =
     "ImportDef_alt0" ==> fun (meta:Meta) _0 ns _2 n ->
        DImport (ns, AName n) 
               
+    "ImportDef_alt1" ==> fun (meta:Meta) _0 _1 s _3 n ->
+       DFFI (s, AName n) 
+              
+    "OpenDef_alt0" ==> fun (meta:Meta) _0 e ->
+       DOpen (e) 
+              
     "UnionDef_alt0" ==> fun (meta:Meta) _0 n _2 cs _4 ->
        DUnion (n, list cs) 
               
@@ -258,7 +264,7 @@ let private visitor =
        LBoolean b 
               
     "String_alt0" ==> fun (meta:Meta) s ->
-       LString (parseString s) 
+       LString s 
               
     "List1_alt0" ==> fun (meta:Meta) x ->
        list x 
@@ -271,6 +277,9 @@ let private visitor =
               
     "boolean_alt1" ==> fun (meta:Meta) _0 ->
        false 
+              
+    "string_alt0" ==> fun (meta:Meta) s ->
+       parseString s 
               
   ]
 
@@ -288,16 +297,22 @@ let private primParser: obj  =
       
       Definition =
         | ImportDef -- alt0
-        | RecordDef -- alt1
-        | UnionDef -- alt2
-        | FunctionDef -- alt3
-        | AliasDef -- alt4
-        | ModuleDef -- alt5
-        | TestDef -- alt6
+        | OpenDef -- alt1
+        | RecordDef -- alt2
+        | UnionDef -- alt3
+        | FunctionDef -- alt4
+        | AliasDef -- alt5
+        | ModuleDef -- alt6
+        | TestDef -- alt7
               
       
       ImportDef =
         | use_ Namespace as_ Name -- alt0
+        | use_ external_ string as_ Name -- alt1
+              
+      
+      OpenDef =
+        | open_ Expression -- alt0
               
       
       UnionDef =
@@ -555,7 +570,7 @@ let private primParser: obj  =
               
       
       String =
-        | double_string -- alt0
+        | string -- alt0
               
       
       List1<A, B> =
@@ -640,6 +655,10 @@ let private primParser: obj  =
       
       double_string =
         | "\"" string_character* "\"" -- alt0
+              
+      
+      string =
+        | double_string -- alt0
               
       
       binary_op =
@@ -805,6 +824,10 @@ let private primParser: obj  =
         | kw<"is"> -- alt0
               
       
+      open_ =
+        | kw<"open"> -- alt0
+              
+      
       reserved =
         | use_ -- alt0
         | as_ -- alt1
@@ -840,6 +863,7 @@ let private primParser: obj  =
         | break_ -- alt31
         | union_ -- alt32
         | is_ -- alt33
+        | open_ -- alt34
               
     }
       

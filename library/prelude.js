@@ -1,5 +1,4 @@
-const { Cons, empty } = require('../Tamago/runtime/list');
-const { TamagoRecordInstance, TamagoAnonymousRecord } = require('../Tamago/runtime/record');
+const { empty, Cons, TamagoRecordInstance, TamagoAnonymousRecord } = Tamago.promordials;
 
 class Prelude {
   opGte(a, b) {

@@ -1,4 +1,5 @@
 const fs = require('fs');
+const path = require('path');
 const Tamago = require('./build/package/Tamago');
 const prettier = require('prettier');
 const glob = require('glob');
@@ -27,17 +28,20 @@ const compileFile = (file) => {
   return pretty;
 };
 
-const projectFiles = (cwd) => {
+const tamagoFiles = (cwd) => {
   return glob.sync('**/*.tamago.js', {
     cwd: cwd,
     absolute: true
   });
 }
 
+const baseFiles = tamagoFiles(path.join(__dirname, '../library'));
+const projectFiles = (cwd) => baseFiles.concat(tamagoFiles(cwd));
+
 const prepare = (cwd) => {
   const runtime = require('./runtime');
   const Tamago = global.Tamago = new runtime.TamagoRuntime();
-  for (const file of projectFiles(process.cwd())) {
+  for (const file of projectFiles(cwd)) {
     require(file);
   }
   Tamago.initialise();
@@ -62,7 +66,7 @@ switch (args._[0]) {
   }
 
   case 'run': {
-    const Tamago = prepare();
+    const Tamago = prepare(process.cwd());
     const module = Tamago.import_module(args.id);
     const main = module.$project("main:");
     console.log(main(process.argv.slice(2)));
@@ -70,7 +74,7 @@ switch (args._[0]) {
   }
 
   case 'test': {
-    const Tamago = prepare();
+    const Tamago = prepare(process.cwd());
     process.exit(Tamago.run_tests());
     break;
   }

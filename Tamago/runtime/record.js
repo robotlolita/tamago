@@ -139,6 +139,7 @@ module.exports = {
   TamagoRecord,
   TamagoUnion,
   TamagoAnonymousRecord,
+  TamagoRecordInstance,
   define_record,
   define_union,
   define_variant

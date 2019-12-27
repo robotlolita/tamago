@@ -22,6 +22,8 @@ and Operator =
 
 and Declaration =
   | DImport of Namespace * Alias
+  | DFFI of string * Alias
+  | DOpen of Expression
   | DRecord of Name * Property list
   | DUnion of Name * UnionCase list
   | DDefine of Name * Expression

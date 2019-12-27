@@ -52,6 +52,10 @@ and printDeclaration decl =
   match decl with
   | DImport (ns, a) ->
       !"use" -- printNamespace ns -- !"as" -- printAlias a
+  | DFFI (s, n) ->
+      !"use" -- !"external" -- (printLiteral (LString s)) -- !"as" -- printAlias n
+  | DOpen (e) ->
+      !"open" -- printExpr e
   | DRecord (n, ps) ->
       !"record" -- text n -- record (List.map printPropDef ps)
   | DUnion (n, cs) ->

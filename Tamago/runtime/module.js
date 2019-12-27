@@ -8,6 +8,7 @@ class TamagoModule {
     this._id = id;
     this._tests = [];
     this._bindings = new Map();
+    this._open = new Map();
   }
 
   expose(name, value) {
@@ -35,6 +36,18 @@ class TamagoModule {
     const module = new TamagoSubmodule(this, name);
     init(module);
     return module;
+  }
+
+  open(object) {
+    assert(object instanceof TamagoModule, `Can only open modules.`);
+    for (const [key, value] of object.$exposed()) {
+      assert(!this._open.has(name) && !this._bindings.has(name), `Conflicting definition ${name}`);
+      this._open.set(key, value);
+    }
+  }
+
+  $exposed() {
+    return this._bindings.entries();
   }
 
   $project(name) {
