@@ -1,23 +1,11 @@
 const $rt = Tamago.make_runtime(__dirname, __filename, require, module);
 const $pattern = $rt.pattern;
-const $gte = $rt.builtin.gte;
-const $gt = $rt.builtin.gt;
-const $lte = $rt.builtin.lte;
-const $lt = $rt.builtin.lt;
-const $eq = $rt.builtin.eq;
-const $neq = $rt.builtin.neq;
-const $composer = $rt.builtin.composer;
-const $composel = $rt.builtin.composel;
-const $concat = $rt.builtin.concat;
-const $plus = $rt.builtin.plus;
-const $minus = $rt.builtin.minus;
-const $times = $rt.builtin.times;
-const $divide = $rt.builtin.divide;
-const $and = $rt.builtin.and;
-const $or = $rt.builtin.or;
-const $not = $rt.builtin.not;
 
 $rt.define_module("tamago.examples.fibonacci", function _($self) {
+  const _Prelude = $rt.thunk(function _() {
+    return $rt.import_module("tamago.prelude");
+  });
+  $self.open($rt.force(_Prelude));
   const _fib = function _fib(_n) {
     return $rt.match(_n, [
       [
@@ -44,7 +32,10 @@ $rt.define_module("tamago.examples.fibonacci", function _($self) {
           return true;
         },
         function _({ ["n"]: _n }) {
-          return $plus(_fib($minus(_n, 1n)), _fib($minus(_n, 2n)));
+          return $self.$project_scoped("+")(
+            _fib($self.$project_scoped("-")(_n, 1n)),
+            _fib($self.$project_scoped("-")(_n, 2n))
+          );
         }
       ]
     ]);

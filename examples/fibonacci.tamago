@@ -1,6 +1,9 @@
 % language: tamago
 module tamago.examples.fibonacci
 
+use tamago.prelude as Prelude
+open Prelude
+
 function n fib =
   match n with
   | 0 => 0

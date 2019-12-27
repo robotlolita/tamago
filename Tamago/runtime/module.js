@@ -41,7 +41,7 @@ class TamagoModule {
   open(object) {
     assert(object instanceof TamagoModule, `Can only open modules.`);
     for (const [key, value] of object.$exposed()) {
-      assert(!this._open.has(name) && !this._bindings.has(name), `Conflicting definition ${name}`);
+      assert(!this._open.has(key) && !this._bindings.has(key), `Conflicting definition ${key}`);
       this._open.set(key, value);
     }
   }
@@ -52,6 +52,12 @@ class TamagoModule {
 
   $project(name) {
     const value = this._bindings.get(name);
+    assert(value !== undefined, `Undefined ${name} in module ${this.id}`);
+    return force(value);
+  }
+
+  $project_scoped(name) {
+    const value = this._open.get(name);
     assert(value !== undefined, `Undefined ${name} in module ${this.id}`);
     return force(value);
   }

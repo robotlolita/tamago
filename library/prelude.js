@@ -1,4 +1,4 @@
-const { empty, Cons, TamagoRecordInstance, TamagoAnonymousRecord } = Tamago.promordials;
+const { empty, Cons, TamagoRecordInstance, TamagoAnonymousRecord } = Tamago.primordials;
 
 class Prelude {
   opGte(a, b) {

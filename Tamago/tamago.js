@@ -8,7 +8,7 @@ const args = require('yargs')
   .scriptName('tamago')
   .usage('$0 <command> [options]')
   .command('format <file>', 'Formats <file>', {})
-  .command('compile <file>', 'Compiles <file>', {})
+  .command('compile', 'Compiles all files under directory', {})
   .command('run <id>', 'Runs module <id>', {})
   .command('test', 'Runs tests', {})
   .help()
@@ -28,15 +28,22 @@ const compileFile = (file) => {
   return pretty;
 };
 
-const tamagoFiles = (cwd) => {
+const tamagoJsFiles = (cwd) => {
   return glob.sync('**/*.tamago.js', {
     cwd: cwd,
     absolute: true
   });
 }
 
-const baseFiles = tamagoFiles(path.join(__dirname, '../library'));
-const projectFiles = (cwd) => baseFiles.concat(tamagoFiles(cwd));
+const tamagoFiles = (cwd) => {
+  return glob.sync('**/*.tamago', {
+    cwd: cwd,
+    absolute: true
+  });
+}
+
+const baseFiles = tamagoJsFiles(path.join(__dirname, '../library'));
+const projectFiles = (cwd) => baseFiles.concat(tamagoJsFiles(cwd));
 
 const prepare = (cwd) => {
   const runtime = require('./runtime');
@@ -58,10 +65,13 @@ switch (args._[0]) {
   }
 
   case 'compile': {
-    const target = args.file + '.js';
-    const js = compileFile(args.file);
-    write(target, js);
-    console.log(args.file, '->', target);
+    const files = tamagoFiles(process.cwd());
+    for (const file of files) {
+      const target = file + '.js';
+      const js = compileFile(file);
+      write(target, js);
+      console.log(file, '->', target);
+    }
     break;
   }
 

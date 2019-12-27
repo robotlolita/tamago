@@ -104,6 +104,9 @@ let exEmpty =
 let exMatch v cs =
   rt "match" [v; jsArray cs]
 
+let exScopeSend n =
+  mrt "$project_scoped" [n]
+
 let pBind n =
   prt "bind" [n]
 
@@ -371,8 +374,10 @@ and compileExpr cc e =
   | EVariable n ->
       if Context.isLazy n cc then
         exForce (jsId n)
-      else
+      else if Context.isLocal n cc then
         jsId n
+      else
+        exScopeSend (jsStr n)
 
   | EHole ->
       failwithf "Hole outside of application"

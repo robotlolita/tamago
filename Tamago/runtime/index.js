@@ -53,7 +53,7 @@ class TamagoRuntime {
   }
 
   assert_match(left, right) {
-    assert(builtin.eq(left, right), `Assertion failed: ${left} ==> ${right}`);
+    assert(left === right, `Assertion failed: ${left} ==> ${right}`);
     return null;
   }
 
@@ -99,10 +99,6 @@ class TamagoRuntime {
 
   get pattern() {
     return patterns;
-  }
-
-  get builtin() {
-    return builtin;
   }
 
   make_runtime(dirname, filename, require, module) {

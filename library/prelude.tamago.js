@@ -272,29 +272,6 @@ $rt.define_module("tamago.prelude", function _($self) {
     ]);
   };
   $self.expose("tail", _tail);
-  const __$at$ = function __$at$(_list, _index) {
-    return $rt.match(_list, [
-      [
-        $pattern.cons($pattern.bind("x"), $pattern.bind("$_11")),
-        function _({ ["x"]: _x }) {
-          return $eq(_index, 1n);
-        },
-        function _({ ["x"]: _x }) {
-          return _x;
-        }
-      ],
-      [
-        $pattern.cons($pattern.bind("$_12"), $pattern.bind("xs")),
-        function _({ ["xs"]: _xs }) {
-          return true;
-        },
-        function _({ ["xs"]: _xs }) {
-          return __$at$(_xs, $minus(_index, 1n));
-        }
-      ]
-    ]);
-  };
-  $self.expose("_:at:", __$at$);
   const __$zip$with$ = function __$zip$with$(_left, _right, _combine) {
     return $rt.match(
       [_left, _right],
@@ -324,4 +301,195 @@ $rt.define_module("tamago.prelude", function _($self) {
     );
   };
   $self.expose("_:zip:with:", __$zip$with$);
+  const __$zip$ = function __$zip$(_left, _right) {
+    return __$zip$with$(
+      _left,
+      _right,
+      $rt.check_arity(0.0, function _() {
+        return $rt.cons(_x, $rt.cons(_y, $rt.empty()));
+      })
+    );
+  };
+  $self.expose("_:zip:", __$zip$);
+  const __$from$fold$ = function __$from$fold$(_list, _initial, _combine) {
+    return $rt.force(_P).$project("listFold")(_list, _initial, _combine);
+  };
+  $self.expose("_:from:fold:", __$from$fold$);
+  const __$map$ = function __$map$(_list, _transform) {
+    return $rt.match(_list, [
+      [
+        $pattern.cons($pattern.bind("x"), $pattern.bind("xs")),
+        function _({ ["x"]: _x, ["xs"]: _xs }) {
+          return true;
+        },
+        function _({ ["x"]: _x, ["xs"]: _xs }) {
+          return $rt.cons(_transform(_x), __$map$(_xs, _transform));
+        }
+      ],
+      [
+        $pattern.empty(),
+        function _({}) {
+          return true;
+        },
+        function _({}) {
+          return $rt.empty();
+        }
+      ]
+    ]);
+  };
+  $self.expose("_:map:", __$map$);
+  const __$filter$ = function __$filter$(_list, _predicate) {
+    return $rt.match(_list, [
+      [
+        $pattern.cons($pattern.bind("x"), $pattern.bind("xs")),
+        function _({ ["x"]: _x, ["xs"]: _xs }) {
+          return true;
+        },
+        function _({ ["x"]: _x, ["xs"]: _xs }) {
+          return _predicate(_x)
+            ? $rt.cons(_x, __$filter$(_xs, _predicate))
+            : __$filter$(_xs, _predicate);
+        }
+      ],
+      [
+        $pattern.empty(),
+        function _({}) {
+          return true;
+        },
+        function _({}) {
+          return $rt.empty();
+        }
+      ]
+    ]);
+  };
+  $self.expose("_:filter:", __$filter$);
+  const $concat = function $concat(_left, _right) {
+    return $rt.match(
+      [_left, _right],
+      [
+        [
+          $pattern.tuple([
+            $pattern.cons($pattern.bind("x"), $pattern.bind("xs")),
+            $pattern.bind("$_11")
+          ]),
+          function _({ ["x"]: _x, ["xs"]: _xs }) {
+            return true;
+          },
+          function _({ ["x"]: _x, ["xs"]: _xs }) {
+            return $rt.cons(_x, $concat(_xs, _right));
+          }
+        ],
+        [
+          $pattern.tuple([
+            $pattern.empty(),
+            $pattern.check($pattern.bind("$_12"), _List)
+          ]),
+          function _({}) {
+            return true;
+          },
+          function _({}) {
+            return _right;
+          }
+        ]
+      ]
+    );
+  };
+  $self.expose("++", $concat);
+  const __$flat_map$ = function __$flat_map$(_list, _transform) {
+    return $rt.match(_list, [
+      [
+        $pattern.cons($pattern.bind("x"), $pattern.bind("xs")),
+        function _({ ["x"]: _x, ["xs"]: _xs }) {
+          return true;
+        },
+        function _({ ["x"]: _x, ["xs"]: _xs }) {
+          return $concat(_transform(_x), __$flat_map$(_xs, _transform));
+        }
+      ],
+      [
+        $pattern.empty(),
+        function _({}) {
+          return true;
+        },
+        function _({}) {
+          return $rt.empty();
+        }
+      ]
+    ]);
+  };
+  $self.expose("_:flat-map:", __$flat_map$);
+  const __$intersperse$ = function __$intersperse$(_list, _separator) {
+    return $rt.match(_list, [
+      [
+        $pattern.cons(
+          $pattern.bind("x1"),
+          $pattern.cons($pattern.bind("x2"), $pattern.bind("xs"))
+        ),
+        function _({ ["x1"]: _x1, ["x2"]: _x2, ["xs"]: _xs }) {
+          return true;
+        },
+        function _({ ["x1"]: _x1, ["x2"]: _x2, ["xs"]: _xs }) {
+          return $rt.cons(
+            _x1,
+            $rt.cons(
+              _separator,
+              __$intersperse$($rt.cons(_x2, _xs), _separator)
+            )
+          );
+        }
+      ],
+      [
+        $pattern.cons($pattern.bind("x"), $pattern.empty()),
+        function _({ ["x"]: _x }) {
+          return true;
+        },
+        function _({ ["x"]: _x }) {
+          return $rt.cons(_x, $rt.empty());
+        }
+      ],
+      [
+        $pattern.empty(),
+        function _({}) {
+          return true;
+        },
+        function _({}) {
+          return $rt.empty();
+        }
+      ]
+    ]);
+  };
+  $self.expose("_:intersperse:", __$intersperse$);
+  const _is_empty = function _is_empty(_list) {
+    return $rt.match(_list, [
+      [
+        $pattern.empty(),
+        function _({}) {
+          return true;
+        },
+        function _({}) {
+          return true;
+        }
+      ],
+      [
+        $pattern.cons($pattern.bind("$_13"), $pattern.bind("$_14")),
+        function _({}) {
+          return true;
+        },
+        function _({}) {
+          return false;
+        }
+      ]
+    ]);
+  };
+  $self.expose("is-empty", _is_empty);
+  const _length = function _length(_list) {
+    return __$from$fold$(
+      _list,
+      0.0,
+      $rt.check_arity(2.0, function _(_$$_15, _$$_16) {
+        return $plus(_$$_15, _$$_16);
+      })
+    );
+  };
+  $self.expose("length", _length);
 });
