@@ -1,7 +1,7 @@
 % language: tamago
 namespace tamago::examples::fibonacci
 
-use tamago::prelude exposing _ + _, _ - _, Integer;
+use tamago::prelude exposing _ + _, _ - _;
 
 define n fib =
 begin
