@@ -31,7 +31,10 @@ begin
   | Tree.Leaf { value } =>
       Tree.Leaf { value };
   | Tree.Branch { left, right } =>
-      Tree.Branch { left = right, right = left };
+      Tree.Branch {
+        left = right invert,
+        right = left invert
+      };
   end
 end
 ```
