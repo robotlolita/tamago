@@ -346,7 +346,7 @@ let rec compileStatement cc stmt =
 
   | SRepeatWith (binds, stmts) ->
       let cc = analyseLazy cc stmts
-      sprintf "while (true) { let %s; %s; %s }"
+      sprintf "{ let %s; %s; while (true) { %s } }"
         (commaList (Seq.map (fst >> compileName cc) binds))
         (unpackRepeatBindings cc binds)
         (stmtList (Seq.map (compileStatement cc) stmts))
