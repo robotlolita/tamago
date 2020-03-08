@@ -176,6 +176,239 @@ piecing different modes of the same information together is a common human
 process.
 
 
-### Notations and Context
+### Flexible Notations
+
+Once we have a process that allows presenting information in different ways
+depending on what questions we're trying to answer at the moment, the next big
+challenge is actually presenting this information in a suitable notation.
+
+Of course, once you have a graphical interface, presenting arbitrary information
+isn't *exactly* the problem. The challenge is the step before that one: figuring
+out which information to present, and figuring out how to present that
+information in a way that supports the programmer's analysis of whatever
+problem they're trying to solve.
+
+I've mentioned the separation between surface syntax and everything else
+before—the surface syntax is the notation we're aiming to present the user. And
+it's also the way through which users interact with the system—and here one must
+understand that direct manipulation of things, like dragging-and-dropping syntax
+nodes, is also a particular notation for a "manipulation language" of sorts.
+
+While this takes care of syntax (or notation, in a more general sense) being a
+flexible thing in Purr, it fails to answer an important question: who *defines*
+these notations? And how does the system know what its rules are, and on which
+contexts they're suitable to be used?
+
+For example, consider the idea of summarising programs into an idea of "types".
+Many IDEs for static languages of the ML family (like Haskell, F#, and OCaml)
+will happily overlay the inferred types over the source for you, so you can
+quickly see what kind of properties the function expects from its inputs and
+outputs. And it feels like this would be a notation whose need is common enough
+that Purr, as a system with flexible notations, should provide for users, right?
+
+Now, consider the following cases:
+
+  - In a dynamically typed codebase, a programmer is interested in knowing which
+    functions read or write to the database, either directly or indirectly. They
+    would like to see the "effect types" inferred from a combination of static
+    and dynamic analysis passes shown on top of each function's signature to
+    quickly see if the function is safe to use anywhere or not.
+    
+  - In a statically typed codebase, a programmer is interested in seeing what
+    types have been covered by previous dynamic runs of their test code. In
+    particular, they would like to enrich the type overlays such that it shows
+    the expected type along with the types that were actually provided during
+    test runs. This way they can extend the tests to verify more of the
+    program's expected behaviour.
+    
+Even though all three situations deal with a concept of "types" and presenting
+that idea of types as an overlay somehow, both the source and actual
+presentation of that information completely differs in each one of them. But
+even if we consider only the first case, we may want to move between a
+"richness" spectrum of the type system depending on which details we're
+interested on at the moment. Maybe we want to ignore refinements in a type
+language that supports that for the current question we're asking; or maybe we
+actually care about the details of how the `Equality<A>` type is implemented,
+and would like to have that information close to its current use-site.
+
+And types are a *common* summary of information. As we look into the day-to-day
+of different programmers, we quickly find things that have **nothing** to do
+with seeing types or source code. For example, a game developer tweaking
+animations may want to look at an onion-skin rendering of some object in the
+current scene, and then tweak values and watch how it affects the animation in
+real-time. An interactive-fiction developer may be interested in seeing how all
+routes are connected, and be able to select nodes to figure out the possible
+paths from each point, in order to check for non-intended dead-ends. A front-end
+developer may want to tweak colours and spacing by direct manipulation, choosing
+colours in an HSV wheel rather than figuring out an arbitrary set of four
+byte-sized numbers.
+
+Under Purr's view of computing, **all** of the tasks above should be achievable
+directly inside of the programming environment, at any point in time. With as
+many notations as programmers feel the need for.
+
+You can see that there's no way for Purr to provide all of these tools out of
+the box—they need to be written by users themselves, according to their
+contexts. So, the analysis and presentation of data has to be handled in an
+extensible manner, where external systems may provide such feature.
+
+Further, it's completely unreasonable to expect every programmer to build their
+own IDE while they go about implementing whatever program they must—the latter
+is already work enough for a team of people. And thus it should be possible for
+people to build small notational components and share them with the broader
+community. In this sense, Purr works as a container for all these user-defined
+notational and analysis components.
+
+But this doesn't take care of all problems. In fact, it creates some. If a
+programming environment such as Purr is made out of several components, written
+by people who are not the Purr developers, how do people manage which components
+they should trust or not? How do we make it safe for people to install a random
+component from Alice without having to worry that she'll steal some SSH keys?
+Or, in an even more common problem, how do we make sure that Alice, Bob, and
+Max's components all play well together if users decide to use them together?
+
+While I'm still searching for a well-grounded theory for answering these
+questions, it's important to note that [capability-based
+security](https://en.wikipedia.org/wiki/Capability-based_security) tries to
+address the first problem—and Purr uses a coarse-grained form of it—, whereas
+systems like [GToolkit](https://gtoolkit.com/) address the second by isolating
+visualisations.
 
 
+## Design Goals
+
+The view of computing detailed above works as an overarching goal of the entire
+Purr system. The core design goals of Tamago are far more modest, in comparison.
+These goals are used to decide how to think about Tamago as a programming
+language on its own, and which features get to make it into the language, or
+which features should be kept out of the language—as much as one may love such
+feature, and argue for its usefulness.
+
+The four core design goals are:
+
+  - **Small, incremental learning curve** — One of the use cases for Tamago is
+    to use it for teaching programming concepts, in particular to absolute
+    beginners. Ideally, this means that it should be possible to introduce
+    concepts gradually, without burdening students with unrelated concepts. And
+    this also implies that the concepts used by Tamago must not require
+    extensive study of areas that are far removed from most people's everyday
+    lives.
+    
+  - **Observability** — People should be able to *explore* computations in ways
+    that make sense to them. They should be able to build their own mental
+    models of computation by observing what is happening—by observing how things
+    work. The "what", "why", and "how" should be questions that get clear
+    answers from these observations. And it should be possible to apply this to
+    every concept in the system, with concrete examples that can relate to the
+    program people are working on—this is also a huge part of why Tamago is not
+    statically typed.
+    
+  - **Can be implemented efficiently in JavaScript** — Tamago is a hosted
+    language, and it should be possible to run all of its components and
+    programs in a web-browser. Supporting the browser as a platform for
+    programming, Tamago can be used for teaching programming without students
+    and teachers having to worry about how to configure a productive environment
+    in 30 different operating systems. Of course, being "able to implement
+    efficiently" does not mean that features need a 1:1 mapping to the host
+    language, but it does mean that implementing a feature should not require
+    extensive runtime changes (e.g.: as proper tail calls would).
+    
+  - **Safety** — Tamago should provide people with an environment that is safe
+    for exploration, both because components will be in a mixed trust mode, and
+    because the core idea is that people can understand programs by observing
+    them. This quickly becomes useless if they're not able to observe something
+    like `rm -rf *` multiple times to build a mental model of it. Therefore,
+    Tamago should let people try all sorts of things without worrying about
+    whether that'll render their computer unusable, or if they're going to have
+    their computer taken over by random attackers.
+    
+
+## A Layered Language
+
+To deliver on these goals Tamago uses an idea of "layered language". One could
+say that Tamago is not a single programing language, but a collection of
+programming languages, each with well-defined dependencies and interoperability
+semantics. This view could, in fact, be applied to other existing programming
+languages as well: for example, one could see Python's list comprehensions as a
+separate sub-language.
+
+Where Tamago differs from existing languages with respect to layers is in that
+they have *well-defined boundaries*. It's possible to make just a subset of the
+layers available to the programmer, in which case the programmer will know
+exactly which features they can use, and which guarantees they can expect from
+the system.
+
+The layered approach was first devised as a teaching mechanism. A teacher could
+choose only the layers that contain the features relevant to the concepts being
+explained, avoiding problems with students stumbling upon unrelated concepts by
+accident—although this by itself creates different problems when students can
+search for solutions in something like Google, which is already seen with
+Racket's teaching languages.
+
+But another important aspect of having a layered approach is that it makes it
+*possible* to provide a very well-defined set of guarantees people can opt for.
+This is important for security. Describing guarantees in a complex language,
+with several features, is difficult because it's not always straightforward to
+understand how these features interact and affect each other. But also because
+once you add certain features you must *give up on* some guarantees. For
+example, by adding unbounded recursion you can abstract over several problems in
+a very practical manner, but this requires giving up on the guarantee that
+programs will always terminate. The layered approach lets you choose which
+guarantees you need, and base your threat modelling on that. It avoids the need
+for ad-hoc restrictions on the language, which often misses edge cases that are
+used by attackers to take over the system.
+
+As everything in Purr, the idea of stratifying the language in layers is hardly
+novel. Tamago's implementation takes inspiration on Van Roy et al's approach
+with [Concepts, Techniques, and Models of Computer
+Programming](https://www.info.ucl.ac.be/~pvr/book.html), as much as it takes
+inspiration in security-focused languages like
+[Noether](https://www.infoq.com/presentations/noether/).
+
+
+### The Layers
+
+  - **Total** — Provides ways of abstracting data and transforming it, but
+    provides no way to abstract over transformations themselves. Guarantees that
+    all computations written in the layer will terminate, but makes no
+    guarantees about resource usage. Does not include any form of recursion,
+    although co-recursive operations are supported if they operate on finite
+    data.
+    
+  - **Core** — Depends on **Total**. Provides ways of abstracting over data
+    transformations. Guarantees that all abstractions will be deterministic, but
+    does not guarantee that they'll always converge. Core does not include any
+    effects or mutable state, and thus can be considered pure.
+    
+  - **Cooperative** — Depends on **Core**. Provides ways of cooperatively
+    interleaving computational processes. Guarantees that all interleavings will
+    be deterministic, but not that they'll always converge. Again, it does not
+    include any effects or mutable state.
+    
+  - **Effect** — Depends on **Cooperative**. Provides ways of interacting with
+    the outside world through algebraic effects and handlers. Guarantees that
+    all effects are controllable, but makes no guarantees about external
+    handlers. Execution may be non-deterministic or diverge if handlers talk to
+    external systems, but if all effects are handled by pure functions,
+    execution is guaranteed to be deterministic.
+    
+  - **Module** — Depends on **Core**. Provides ways of describing boundaries,
+    scopes, and trust. Guarantees that subprograms are not able to do anything
+    that its parent program does not allow it to, and guarantees that each
+    subprogram is never allowed to do anything more than what its trust boundary
+    allows. However, it does not allow placing bounds on time and memory usage,
+    so it's not possible to protect against denial-of-service kinds of attacks.
+    
+  - **Safe-data** — Depends on **Total**. Provides first-order contracts for
+    data sructures, but no abstractions over contracts. Contracts always
+    terminate, but there are no guarantees about their resource usage, or impact
+    over runtime.
+    
+  - **Safe** — Depends on **Safe-data** and **Core**. Provides higher-order
+    contracts and the ability of abstracting over contracts. Inherits the
+    problems of contracts possibly diverging from **Core**, and of resource
+    usage not being bounded from everything else.
+    
+  - **Meta** — Depends on **Total**. Provides ways of attaching meta-data to
+    computational descriptions, and makes such descriptions available to the
+    system. There's no computation involved, and thus no effects on runtime.
