@@ -119,6 +119,11 @@ $ tamago compile
 $ tamago run tamago::examples::hello-world;
 ```
 
+## Documentation
+
+You can learn more about Tamago and its goals by [reading the docs](./docs/README.md).
+
+
 ## Compiling from source
 
 There are no pre-built versions of Tamago currently, as the compiler is pretty
