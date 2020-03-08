@@ -148,6 +148,7 @@ it by its file system path.
 Tamago is still a work-in-progress. Below is the current plan for the near
 future:
 
+  - [X] A bootstrapping compiler;
   - [ ] A self-hosting, incremental, multi-pass compiler;
   - [ ] A small standard library;
     - [ ] Numerics (Integer, Float64);
