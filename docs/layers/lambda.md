@@ -528,7 +528,7 @@ specified will simply diverge.
 
 ### Privacy attacks
 
-Lambda Tamago provides hardly any resource for privacy. Static scoping means
+Lambda Tamago provides almost no controls for privacy. Static scoping means
 that regions may hide some bindings, but top-level bindings are visible for
 the entire program.
 
