@@ -535,7 +535,7 @@ the entire program.
 Furthermore, all data structures in Lambda Tamago are fully reflexive. Which
 means that their values may be inspected by any subprogram. While no data
 may be *modified*, this still means that in a Lambda Tamago program with mixed
-levels of trust, sensitive data may be leaked to untrusted sub-programs.
+levels of trust sensitive data may be leaked to untrusted sub-programs.
 
 Privacy controls are introduced in Sensitive Tamago and Modular Tamago. They
 solve some privacy around sharing data among components with mixed trust levels,
