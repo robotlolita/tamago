@@ -38,13 +38,145 @@ functional languages:
   - **Special unit/null value**: `nothing`;
 
 
-### Tuples
+### Records
 
-Tuples are immutable, fixed sequences of values. Tamago has 
+Records are immutable compositions of labelled values. For example, one
+could describe a coordinate in a 2d space using records:
+
+```
+{ x: 1, y: 2 }
+```
+
+This represents the coordinate where the `x` axis is one, and the `y` axis
+is 2.
+
+Values may be projected from records through their names:
+
+```
+let p1 = { x: 1, y: 2 };
+p1.x; // => 1
+p1.y; // => 2
+```
+
+Finally, one can create new records that share some of an existing record's
+associations:
+
+```
+let p1 = { x: 1, y: 2 };
+let p2 = p1 { y: 3 };
+
+p1.x; // => 1
+p1.y; // => 2
+
+p2.x; // => 1  (same as p1.x)
+p2.y; // => 3  (updated association)
+```
+
+
+### Lists
+
+Lists are an inductive data structure that allows us to express sequences
+of values. The implementation Tamago uses is commonly referred to as a
+"linked list" in computer science literature.
+
+A list can be one of two possibilities:
+
+  - The empty list: `[]`; or
+  - A link of a value followed by another list: `[value, ...list]`;
+
+For example, to express a sequence of natural numbers from 1 to 4, one could
+write:
+
+```
+[1, ...[2, ...[3, ...[4, ...[]]]]]
+```
+
+But since lists are such a common data structure, Tamago allows one to express
+the same list in the following way:
+
+```
+[1, 2, 3, 4]
+```
+
+Linked lists are immutable, thus one may only create new lists that shares
+values of existing lists. For example, if we wanted to add `0` to the
+the beginning of the list, we could write:
+
+```
+let naturals = [1, 2, 3, 4];
+let naturals2 = [0, ...naturals];
+```
+
+Now `naturals2` represents the sequence of naturals from 0 to 4.
+
+
+### Pattern matching
+
+We've seen how to construct values in Tamago, but what about *using* these
+values? Records still have a projection operator, but how do we go about
+using parts of a list? The answer in Tamago is **pattern matching**.
+
+Now, Tamago uses pattern matching both for dealing with inductive data
+structures, and as a more general form of control flow. Indeed, common
+constructs in other languages, like `if ... then ... else ...` are really
+a special application of pattern matching in Tamago.
+
+The pattern matching construct Tamago uses is very similar to other functional
+languages, particularly ML dialects:
+
+```
+match [1, 2, 3, 4] with
+| [a, b, 3, 4] => [a, b];
+end
+```
+
+The following patterns are supported by Tamago:
+
+  - `some-name`: binds the value at that position to `some-name`;
+  - `p as some-name`: binds the value to `some-name`, but only if the pattern
+    `p` successfully matches;
+  - `1000`, `"foo"`, `true`: matches if the value equals the literal;
+  - `{ key: p }`: matches a record containing an association with key `key`,
+    but only if the value associated by that matches the pattern `p`;
+  - `[a, b, c, ...d]`, `[]`: matches lists;
+  - `_`: matches anything, but doesn't bind it to any name;
+  - `^expr`: matches anything that equals the value yielded by evaluating the
+    expression `expr`;
+
+Tamago also supports guards in pattern matching. For example:
+
+```
+match [1, 2] with
+| [a, b] when a + b === 2 => 2;
+| [a, b] => 3;
+end
+```
+
+The example above will return 3, as the first pattern only matches if the
+guard `a + b === 2` holds.
+
 
 ### Lambda abstractions and application
 
+In order to abstract over expressions, Lambda Tamago provides lambda
+abstractions. A lambda in this context is an anonymous closure---a function
+with its accompanying environment record.
 
+Lambdas may be expressed through the `fun` syntax:
+
+```
+fun(X, Y, Z) -> X + Y + Z
+```
+
+And they can be applied through the parenthesised invocation syntax:
+
+```
+let inc = fun(X) -> X + 1;
+inc(1); // => 2
+```
+
+Tamago's named functions, as described in the next section, are just a
+convenient form of using lambdas.
 
 
 ### Bindings
@@ -260,3 +392,157 @@ such choice makes sense.
 | `_ ++ _`  | Concatenation                  |
 
 
+#### Eager, local bindings
+
+Besides `define`, Tamago also provides an eager binding form that works
+*inside* function bodies. The `let` form associates names with values,
+and thus evaluates the expression on the right before proceeding.
+
+```
+let two = 1 + 1;
+let four = two + two;
+```
+
+Will have the following reduction semantics:
+
+```
+let two = 1 + 1;
+let four = two + two;
+--------------------------------------- (1) simplifying two
+let two = 2;
+let four = two + two;
+--------------------------------------- (2) substituting two in four
+let two = 2;
+let four = 2 + 2;
+--------------------------------------- (3) simplifying four
+let two = 2;
+let four = 4;
+```
+
+
+## Abstract machine
+
+### Abstract syntax
+
+```
+I in integers
+F in floats
+T in texts
+B in booleans
+X in names
+L in labels
+
+Statement (S):
+  let X = E;                      -- eager binding
+  E;                              -- expression
+
+Expression (E):
+  fun(X, ...) -> E                -- lambda abstraction
+  E(E, ...)                       -- lambda application
+  X                               -- variable dereference
+
+  delay E                         -- thunks an expression
+  force E                         -- forces an expression
+
+  []                              -- empty list
+  [E, E]                          -- cons cell
+
+  { L: E, ... }                   -- record
+  E { L: E, ... }                 -- record extension
+  E.L                             -- record projection
+
+  nothing                         -- unit value
+  I | F | T | B                   -- literal
+
+  match E with MC ... end         -- pattern matching
+
+Match case (MC):
+  case P when E => S ...
+
+Pattern (P):
+  I | F | T | B | nothing         -- literal
+  X                               -- bind match
+  []                              -- empty list
+  [X, X]                          -- cons cell
+  { L: X, ... }                   -- record
+```
+
+### Static semantics
+
+TODO
+
+### Dynamic semantics
+
+TODO
+
+
+## Threat model
+
+Lambda Tamago is a simple, pure functional language. As a result the language
+is managed, uses only immutable data, and guarantees that all programs written
+in it will be deterministic.
+
+There are still many interesting attacks that one may perform against a
+Lambda Tamago program. This section describes the common threats. Consider
+that all threats described here are accepted, and when the threat is mitigated
+by an additional layer, this is noted here.
+
+Note that Lambda Tamago does not consider many forms of external attacks. For
+example, if external parties can scan and modify a Lambda Tamago's program's
+memory; or if a process may modify a Lambda Tamago program's source when stored
+on disk. While those threats exist, Lambda Tamago does nothing to mitigate
+them.
+
+
+### Resource attacks
+
+While Lambda Tamago programs are pure from a strict mathematical perspective,
+from a computational one it still requires resources to run. A Lambda Tamago
+program will allocate memory, requiring both RAM and disk space (if swap area
+is configured on the disk); and instructions take time to execute.
+
+Because there's no way of limiting or placing guarantees on the amount of
+resources used by a Lambda Tamago program, it's easy for an attacker to
+write a Lambda Tamago program that causes a denial of service, either by
+hogging the CPU or by hogging the memory.
+
+In both cases this attack affects not only the Lambda Tamago program itself,
+but also other processes sharing the same resources. If a Lambda Tamago program
+recursively allocates many linked list nodes, it could starve the machine of
+memory, and might cause other processes to crash by not having any available
+memory page to store their data on.
+
+A Lambda Tamago program that hogs too many resources might not cause other
+processes to *crash*, but it still has a very high probability of making them
+run slower. This means that the latency on all processes may increase, and if
+any of the processes expects some deadlines to be met, it'll experience hiccups
+that may well be catastrophic from that process' point of view.
+
+The unbounded-resources aspect of Lambda Tamago makes it a poor fit for using
+as a scripting language inside applications that may receive programs written
+by uncooperative users. Resource bounds are added in Bounded Tamago, and can
+be used to mitigate the problem---a Bounded Tamago program does not make any
+static guarantee about resources, so programs that require more resources than
+specified will simply diverge.
+
+
+### Privacy attacks
+
+Lambda Tamago provides hardly any resource for privacy. Static scoping means
+that regions may hide some bindings, but top-level bindings are visible for
+the entire program.
+
+Furthermore, all data structures in Lambda Tamago are fully reflexive. Which
+means that their values may be inspected by any subprogram. While no data
+may be *modified*, this still means that in a Lambda Tamago program with mixed
+levels of trust, sensitive data may be leaked to untrusted sub-programs.
+
+Privacy controls are introduced in Sensitive Tamago and Modular Tamago. They
+solve some privacy around sharing data among components with mixed trust levels,
+but provide no static guarantees on sensitive data flow. Because these controls
+are dynamic, indirect leaks of secrets is not accounted for.
+
+
+## Appendix A: Surface Syntax
+
+TODO

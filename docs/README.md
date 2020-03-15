@@ -368,6 +368,14 @@ inspiration in security-focused languages like
 
 ### The Layers
 
+  - [**Lambda Tamago**](./layers/lambda.md) - Provides ways of abstracting
+    and transforming data. Guarantees that all computations are deterministic
+    and pure, but makes no guarantees about termination or resource usage.
+    Programs may still non-deterministically diverge if the machine running
+    them cannot always provides the required resources, but terminating
+    programs will not compute different values.
+
+<!--
   - **Total** — Provides ways of abstracting data and transforming it, but
     provides no way to abstract over transformations themselves. Guarantees that
     all computations written in the layer will terminate, but makes no
@@ -412,3 +420,4 @@ inspiration in security-focused languages like
   - **Meta** — Depends on **Total**. Provides ways of attaching meta-data to
     computational descriptions, and makes such descriptions available to the
     system. There's no computation involved, and thus no effects on runtime.
+-->
