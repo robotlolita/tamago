@@ -286,7 +286,7 @@ The following tables describe the operators Tamago supports:
 ##### Logical operators
 
 | Signature | Description                    |
-+-----------+--------------------------------+
+| --------- | ------------------------------ |
 | `not _`   | Logical negation               |
 | `_ and _` | Logical conjunction            |
 | `_ or _`  | Logical disjunction            |
@@ -295,7 +295,7 @@ The following tables describe the operators Tamago supports:
 ##### Arithmetic operators
 
 | Signature | Description                    |
-+-----------+--------------------------------+
+| --------- | ------------------------------ |
 | `_ + _`   | arithmetic addition            |
 | `_ - _`   | arithmetic subtraction         |
 | `_ * _`   | arithmetic multiplication      |
@@ -306,7 +306,7 @@ The following tables describe the operators Tamago supports:
 ##### Relational operators
 
 | Signature | Description                    |
-+-----------+--------------------------------+
+| --------- | ------------------------------ |
 | `_ > _`   | relational greater than        |
 | `_ >= _`  | relational greater or equal to |
 | `_ < _`   | relational less than           |
@@ -316,7 +316,7 @@ The following tables describe the operators Tamago supports:
 ##### Equality operators
 
 | Signature | Description                    |
-+-----------+--------------------------------+
+| --------- | ------------------------------ |
 | `_ === _` | structural equality            |
 | `_ =/= _` | structural inequality          |
 
@@ -324,7 +324,7 @@ The following tables describe the operators Tamago supports:
 ##### Collection operators
 
 | Signature | Description                    |
-+-----------+--------------------------------+
+| --------- | ------------------------------ |
 | `_ ++ _`  | Concatenation                  |
 
 
