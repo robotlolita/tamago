@@ -829,3 +829,163 @@ end
 
 ## 4. Effectful Tamago
 
+Building on top of the cooperative concurrency primitives, Tamago introduces
+a way of describind and performing effects that can be controlled. With
+algebraic effects and handlers, users can write programs that read much
+like a regular imperative program, but in ways that effects in these
+programs can be fully controlled from calling code.
+
+One use-case for this is testing. In imperative programs you'll often see
+the idea of mocking effectful code to control it, but mocks are generally
+global, or require painstaking parameterisation. In Tamago one can do
+mocks without changing any piece of existing code:
+
+```
+effect Time =
+  | Now {};
+
+effect IO =
+  | Write { text };
+
+define now = Time.Now {}
+define write: text = IO.Write { text };
+
+define greet = do
+  let time = !now;
+  if time.hours < 12 then
+    !write: "Good morning"
+  else if time.hours < 18 then
+    !write: "Good afternoon"
+  else
+    !write: "Good evening"
+  end
+end
+```
+
+In this example `greet` depends on two things: the current time, and a way
+of presenting information on the screen. These two dependencies are captured
+by the described effects: `Time.Now` and `IO.Write`, which `greet` performs
+through the `!` operator.
+
+When executing this program, we want to get the system time, and output things
+on the terminal (or other appropriate display), but when testing we want
+neither. We want to control the time and the display, so we can perform
+our tests. That's where *handlers* come in:
+
+```
+test "greet good morning" = do
+  handle
+    !greet
+  with
+  | Time.Now {} => resume with { hours: 8 };
+  | IO.Write { text } =>
+      assert text === "Good morning";
+      resume with nothing;
+  end
+end
+```
+
+In this text greet will always receive a time object where `hours` is always
+`8`. And whenever greet tries to output something we'll check if that
+something is `Good morning`. No changes to `greet` are necessary. And if
+we have similar tests for the other possible outputs in `greet`, they can
+all run concurrently without stepping on each other's toes---the way we've
+described how the effects should be handled only affect the code that is
+executed inside of that particular `handle` block.
+
+
+### Effects
+
+An effect can be described in a similar way to how regular unions are
+described. Indeed, they're much the same underneath, with the sole exception
+that an effect is accepted by the role `Effect`.
+
+```
+effect IO =
+  | Read {}
+  | Write { text };
+
+IO.Read {} is Effect; // => true
+```
+
+### Handlers
+
+A handler is a block much like `try/catch` in most mainstream languages. It
+executes a sequence of instructions, and whenever these instructions perform
+an effect, one of the handlers defined in the block is tried to decide how
+to continue the computation. Handlers are dynamically scoped, just like
+`try/catch` blocks, so this search for a suitable handler continues upwards
+in the call stack until one is found.
+
+Where handlers differ from `try/catch` is that, once a handler is found, the
+call stack is not unwound. That is, a `!` (perform) operation is more akin to
+a regular function call than a `throw`, and the handler can decide to resume
+from where the program stopped, returning a value there, or to unwind the
+stack and return a value from the current handle block---just like `catch`.
+
+```
+define f = do
+  handle
+    let hours = (!now).hours;
+    hours + 1;
+  with
+  | IO.Write { text } => resume with nothing;
+  end
+end
+
+define g = do
+  handle
+    let hours = !f;
+    !write: (hours as-text);
+    !write: "More text";
+  with
+  | Time.Now {} => resume with { hours: 3 };
+  | IO.Write { text } => return text;
+  end
+end
+```
+
+When `g` is executed we'll first perform `f`. In `f` we introduce a handler
+that catches all `IO.Write` requests. But `f` only performs a `Time.Now`
+request. Because `f` doesn't define a handler for it, the search continues
+upwards and `g`'s handlers are tried. This causes `f` to be resumed with
+`{ hours: 3 }` as the value, so we bind `3` to the hours variable, and
+return `4`.
+
+In `g` we proceed to perform an `IO.Write { text: "4" }` request. Now we only
+have `g` in our call stack, so we only search `g`'s handlers. Although we do
+find a `IO.Write` handler, it does not resume `g`, but instead concludes the
+*entire handle block* with `"4"` as its return value, and thus
+`!write: "More text"` is never performed. `g` returns `"4"`.
+
+So a handler matches on an effect (much like in regular pattern matching).
+Once one of these patterns match, we're given the chance of deciding
+how to handle that request. We can resume the requesting code with a value,
+much like resuming processes in Cooperative Tamago; We can ignore the
+requesting code and return from the handle block itself, much like `try/catch`
+in most languages; And we can decide to not resume anything and instead pass
+control to another function.
+
+### Default handlers
+
+Because every effect in Tamago is described by these effect objects and their
+accompanying handlers, there's nothing that tells the runtime how to do common
+things, like getting the system time or writing a file.
+
+In order to support these cases, and in order to allow some abstraction over
+handlers, Tamago introduces the idea of default handlers. A default handler
+is just a named block of code that defines handler patterns. When running
+the program, these handlers will be tried if no prior handler block has managed
+to handle the effect.
+
+```
+default handler system-time with
+| Time.Now {} => resume with get-system-time();
+end
+
+default handler terminal-io with
+| IO.Write { text } => terminal.write(text); resume with nothing;
+| IO.Read {} => resume with terminal.read();
+end
+```
+
