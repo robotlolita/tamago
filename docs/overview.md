@@ -350,6 +350,39 @@ end
 a; // => 1
 ```
 
+### Modules
+
+Unlike the use of the term in most other places, a `module` in Tamago is simply
+a singleton collection of definitions supporting projections. One could say
+it's akin to first-class modules in some languages.
+
+```
+module Lambda with
+  data Expr =
+    | Var { name }
+    | Lambda { parameter, body }
+    | Apply { callee, argument };
+
+  define expr evaluate: context = to-do;
+end
+
+Lambda.Expr.Var { name: "x" };
+```
+
+
+### Opening definitions
+
+It's possible to open a record or module instance, exposing it as regular
+variable bindings. For example:
+
+```
+open Lambda exposing _ evaluate: _, Expr;
+open Expr exposing Var, Lambda, Apply;
+
+Var { name: "x" } evaluate: { x: 1 };
+```
+
+
 ## 1. Contract Tamago
 
 Tamago supports both first-order and higher-order contracts. Contract Tamago
@@ -989,3 +1022,91 @@ default handler terminal-io with
 end
 ```
 
+## 5. Modular Tamago
+
+Finally, Tamago organises programs into namespaces. And namespaces are also
+how Tamago implements its coarse-grained capability security system.
+
+
+### Namespaces
+
+A namespace is a collection of entities attached to some unique name. For
+example, Boolean-related operations could form a namespace:
+
+```
+namespace tamago::logic::boolean
+
+define Boolean = to-do;
+define a and b = to-do;
+define a or b = to-do;
+define not a = to-do;
+```
+
+So here the unique name for this namespace is `tamago::logic::boolean`. The
+`::` symbols are used for separating categories, describing a sort of
+hierarchy, but this does not necessarily make `tamago` and `tamago::logic` a
+thing---there's no way of referring to those, because they're not namespaces.
+That is, the namespace is the entire name--it's not really made out of parts.
+
+
+### Linking and Search Spaces
+
+Namespaces may link to other namespaces by expressing a dependency. This is
+done through the `use` statement.
+
+```
+namespace my::program
+
+uses tamago::logic::boolean exposing _ and _, _ or _, not _;
+
+define main = not (true and false) or false;
+```
+
+So here we're saying that `my::program` depends on some
+`tamago::logic::boolean` implementation that provides at least the functions
+`_ and _`, `_ or _`, and `not _`.
+
+Note that when you link you express a dependency in terms of *constraints*, 
+you don't really specify a specific *implementation*. As long as an
+implementation uses the name `tamago::logic::boolean` and provides those
+three functions, anything could be linked to `my::program`. Indeed, a program
+could have several files providing an implementation for
+`tamago::logic::boolean`, and those won't necessarily conflict with one
+another.
+
+So, if `use` only describes some constraint for the dependency, how do we
+find a suitable implementation? That's where search spaces come in.
+
+A search space is a collection of implementations of namespaces. Again, there
+may be multiple implementations for a single namespace within this collection.
+However, each namespace has to link to exactly one implementation at runtime.
+If a dependency's constraints is not enough for finding an unique
+implementation, then more constraints need to be added to it.
+
+For example, let's suppose that there's a `tamago::file-system` namespace
+that provides file system utilities. Now, file system utilities tend to
+differ between operating systems, even if the interface is roughly the same,
+so it makes sense for many different implementations of `tamago::file-system`
+to exist. Thus, the following dependency constraint would likely result in
+an ambiguous linking:
+
+```
+use tamago::file-system exposing _ read-file;
+```
+
+So the approach here is to either prune the search space itself (e.g.: if the
+program is going to be executed or packaged for windows, the search space can
+be configured to only include windows-targeting packages), or by adding more
+constraints to the `use` statement:
+
+```
+use tamago::file-system exposing _ read-file
+  when platform: "windows";
+```
+
+Each implementation has its own search space. It is thus possible to specify
+exactly what each piece of code can and can not use by relaxing or constraining
+this space.
+
+Constraints and search spaces are not yet implemented, but they're at the
+heart of Tamago's capability security implementation.
