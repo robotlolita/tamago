@@ -110,6 +110,9 @@ begin
 end
 ```
 
+For a more detailed introduction to Tamago, see the
+[Language Overview](./docs/overview.md).
+
 The [examples](./examples/) folder includes several other small examples of
 Tamago in action. You can run them by providing the namespace to the tamago VM:
 
