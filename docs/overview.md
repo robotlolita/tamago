@@ -101,6 +101,26 @@ end
 p1 === p2; // false
 ```
 
+### Unions
+
+Tagged records can be grouped into unions to better indicate that there can
+be one of several possibilities. For example:
+
+```
+data Maybe =
+  | Some { value }
+  | Nothing {};
+```
+
+Construction of these values follow a similar pattern, but one must project
+the correct tag from the union:
+
+```
+let some1 = Maybe.Some { value: 1 };
+let none = Maybe.Nothing {};
+```
+
+
 ### Dynamic labels (symbols)
 
 Record labels can be static, as seen before. In which case the values can be
@@ -336,6 +356,10 @@ Tamago supports both first-order and higher-order contracts. Contract Tamago
 also adds features for defining other forms of dynamic verification, like
 tests (and in the future, property-based tests).
 
+> NOTE: this layer is still a work-in-progress. Types and contract abstraction
+>       are mostly lacking right now.
+
+
 ### Assert statements
 
 Assertions are the most basic form of first-order contracts in Tamago. An
@@ -462,71 +486,152 @@ This form of example-based and tool-assisted development is something Tamago
 aims to fully support in the future.
 
 
-### Types and Contracts
+## 2. Method Tamago
 
-Tamago has a concept of "Types" that is not quite how type theory defines the
-term. In Tamago, a "Type" is simply a (non-exclusive) categorisation of values
-by their observable properties.
+Method Tamago introduces multi-methods, grouped into interfaces. You can see
+this as a form of first-class type classes, or as a less restricted form of
+Clojure protocols.
 
-The following types are pre-defined:
 
-  - `Any` --- any value is accepted by this type;
-  - `Integer`, `Float64`, `Boolean`, `Text`, `Nothing` --- the primitive types;
-  - `Record`, `Tuple`, `Tuple2`, ..., `TupleN`, `List` --- container types
-    that accept any subtype;
-  - `(T1, T2, ..., TN)` --- a (special) constructor for tuple types;
-  - `[T]` --- a list of values of type T;
-  - `{ label: T }` --- a record type with exact the described shape;
-  - `{ label: T, ...rest }` --- a record type with at least the described
-     shape, and also matches `rest`;
-  - `Tag { label: T }` --- a tagged record with the exact described shape;
-  - `Tag { label: T, ...rest }` --- a tagged record with at least the
-    described shape, and also matches `rest`;
+### Interfaces and Implementations
 
-Types can be combined through type operators:
-
-  - `T1 or T2` --- succeeds if either T1 or T2 succeeds;
-  - `not T` --- succeeds if T does not succeed;
-  - `T1 and T2` --- succeeds if both T1 and T2 succeeds;
-
-Types can be quantified:
-
-  - `for all a: T` --- universal quantification introducing the variable `a`
-    in the type expression T. Variables are unified through type equivalence;
-
-And types can be refined:
-
-  - `T when expr` --- a type that's valid only when the expression returns
-    true;
-
-Types can also be named, giving us things like:
+Multi-methods are grouped into interfaces. And then these interfaces are
+implemented for many kinds of values.
 
 ```
-type Positive-Integer =
-  for all a: a is Integer when a > 0;
-
-type Halving-Tuple =
-  for all a, b:
-    (a is Integer) and (b is Integer)
-  when
-    b === (a / 2);
-```
-
-Types can be tested directly through the `is` operator:
-
-```
-define positive-divide(a, b) =
-begin
-  assert a is Positive-Integer;
-  assert b is Positive-Integer;
-  a / b;
+interface Equality(a, b) with
+  method a === b;
+  method a =/= b = not (a === b);
 end
 ```
 
+The interface is parameterised by some variables, and these variables
+are used in the method to indicate which parameters are to be used
+for dispatching.
 
+Methods may be either required or optional. An optional method is one that
+provides a default implementation, but allows that implementation to be
+overriden by specialised implementations for performance or more restricted
+behaviour.
 
+The `implement` construct provides an implementation of the protocol, and
+must provide the roles to substitute for each parameter that the interface
+expects:
 
-## 1. Cooperative Tamago
+```
+implement Equality(Float64, Float64) with
+  method left === right = float-equals(left, right);
+  method left =/= right = float-not-equals(left, right);
+end
+
+implement Equality(Integer, Integer) with
+  method left === right = integer-equals(left, right);
+  // =/= implementation inherited from the Equality interface
+end
+
+implement Equality(Float64, Integer) with
+  method left === right = left === integer-to-float(right);
+end
+
+implement Equality(Integer, Float64) with
+  method left === right = integer-to-float(left) === right;
+end
+```
+
+### Dispatch
+
+Note here that dispatch does not work on contracts, but rather on a more
+concrete concept of "role". A role can be:
+
+  - A primitive type (`Integer`, `Text`, ...);
+  - A record tag;
+  - An union;
+  - An interface;
+  - The special type `Any`;
+  - The special role `itself`, e.g.: `Integer.itself`
+
+Dispatch takes into account the *distance* from a concrete type to order the
+dispatch. And the sorting proceeds left-to-right.
+
+For example, let's say that an interface is parameterised by two variables.
+Then it has the following implementations:
+
+```
+implement Interface(Any, Any) with ... end
+implement Interface(Integer, Integer) with ... end
+implement Interface(Maybe.Some, Maybe) with ... end
+implement Interface(Maybe, Maybe.Some) with ... end
+```
+
+Regardless of the order in which these appear in the source code, the following
+order is used for dispatch:
+
+```
+(Integer, Integer)   -- all concrete
+(Maybe.Some, Maybe)  -- first concrete
+(Maybe, Maybe.Some)  -- second concrete
+(Any, Any)           -- always last
+```
+
+### Inheritance
+
+Interfaces may extend other interfaces, requiring implementations to exist
+for them whenever someone implements the interface.
+
+For example, when defining a `Monad` interface, the objects also need to
+implement `Applicative`, and this dependency can be made explicit in the
+code:
+
+```
+interface Applicative(typ, instance) with
+  method typ of: value;
+  method instance apply: value;
+end
+
+interface Monad(typ, instance) with
+  requires Applicative(typ, instance);
+  method instance chain: transform;
+end
+```
+
+Now when we implement these interfaces, Tamago will only allow implementations
+of `Monad` where an implementation for `Applicative` also exists:
+
+```
+// this is okay
+implement Applicative(Maybe.itself, Maybe) with
+  method _ of: value = Maybe.Some { value };
+  method m apply: f = begin
+    match (f, m) with
+    | (Maybe.Some { value: f }, Maybe.Some { value: v }) =>
+        Maybe.Some { value: f(v) };
+    | (Maybe.Nothing {}, _) =>
+        Maybe.Nothing {};
+    | (_, Maybe.Nothing {}) =>
+        Maybe.Nothing {};
+    end
+  end
+end
+
+implement Monad(Maybe.itself, Maybe) with
+  method m chain: f = begin
+    match m with
+    | Maybe.Some { value } => f(value);
+    | Maybe.Nothing {} => Maybe.Nothing {}
+    end
+  end
+end
+
+// this is not okay, as there's no Applicative implementation for List
+implement Monad(List.itself, List) with
+  method m chain: f = begin
+  | [] => [];
+  | [x, ...xs] => f(x) ++ (xs chain: f);
+  end
+end
+```
+
+## 3. Cooperative Tamago
 
 Cooperative Tamago introduces co-routines, loops, and local mutation. These
 primitives work as a building block for the cooperative concurrency used by
@@ -722,4 +827,5 @@ let one-to-ten = process
 end
 ```
 
+## 4. Effectful Tamago
 
