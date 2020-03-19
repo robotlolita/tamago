@@ -1,3 +1,20 @@
+const TypeDistance = {
+  CONCRETE_VALUE: 0,
+  DATA_TYPE: 1,
+  UNION_TYPE: 2,
+  PROTOCOL: 3,
+  ANY: 4
+};
+
+class ListCons {
+  constructor(head, tail) {
+    this.head = head;
+    this.tail = tail;
+  }
+}
+
+const list_empty = new class ListEmpty {};
+
 function prop(name) {
   return `@t:${name}`;
 }
@@ -230,60 +247,78 @@ const unsafeTuple = make_module("tamago::native::unsafe::tuple", {
 
 const unsafeType = make_module("tamago::native::unsafe::type", {
   Integer: {
+    tamago_type_distance: TypeDistance.DATA_TYPE,
     tamago_has_instance(value) {
       return typeof value === "bigint";
-    },
-    tamago_show() {
-      return `<type: Integer>`;
     }
   },
 
   Float64: {
+    tamago_type_distance: TypeDistance.DATA_TYPE,
     tamago_has_instance(value) {
       return typeof value === "number";
     }
   },
 
+  Numeric: {
+    tamago_type_distance: TypeDistance.UNION_TYPE,
+    tamago_has_instance(value) {
+      return typeof value === "number"
+      ||     typeof value === "bigint";
+    }
+  },
+
   Boolean: {
+    tamago_type_distance: TypeDistance.DATA_TYPE,
     tamago_has_instance(value) {
       return typeof value === "boolean";
     }
   },
 
   Symbol: {
+    tamago_type_distance: TypeDistance.DATA_TYPE,
     tamago_has_instance(value) {
       return typeof value === "symbol";
     }
   },
 
   Text: {
+    tamago_type_distance: TypeDistance.DATA_TYPE,
     tamago_has_instance(value) {
       return typeof value === "string";
-    },
-    tamago_show() {
-      return `<type: Text>`;
     }
   },
 
   Tuple: {
+    tamago_type_distance: TypeDistance.DATA_TYPE,
     tamago_has_instance(value) {
       return Array.isArray(value);
     }
   },
 
+  List: {
+    tamago_type_distance: TypeDistance.UNION_TYPE,
+    tamago_has_instance(value) {
+      return value instanceof ListCons || value === list_empty;
+    }
+  },
+
   Lambda: {
+    tamago_type_distance: TypeDistance.DATA_TYPE,
     tamago_has_instance(value) {
       return typeof value === "function";
     }
   },
 
   Nothing: {
+    tamago_type_distance: TypeDistance.CONCRETE_VALUE,
     tamago_has_instance(value) {
       return value === null;
     }
   },
 
   Any: {
+    tamago_type_distance: TypeDistance.ANY,
     tamago_has_instance(value) {
       return value !== undefined;
     }
@@ -319,5 +354,8 @@ module.exports = {
   prop,
   Panic,
   show,
-  equals
+  equals,
+  TypeDistance,
+  ListCons,
+  list_empty
 };

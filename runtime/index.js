@@ -1,4 +1,4 @@
-const {Panic, show, prop, load_natives, equals} = require("./native");
+const {Panic, show, prop, load_natives, equals, ListCons, list_empty, TypeDistance} = require("./native");
 
 const TagRecord = new class TRecord {};
 const EFFECT_HANDLED = new class Handled {};
@@ -108,6 +108,7 @@ class Tamago {
 
   as_type(type) {
     return {
+      tamago_type_distance: TypeDistance.CONCRETE_VALUE,
       tamago_has_instance(value) {
         return value === type;
       },
@@ -530,6 +531,10 @@ function make_record(ns, tag, fields) {
       }
     }
 
+    static get tamago_type_distance() {
+      return TypeDistance.DATA_TYPE;
+    }
+
     static tamago_has_instance(value) {
       return value instanceof record;
     }
@@ -604,6 +609,10 @@ function make_union(ns, tag, init) {
       return false;
     }
 
+    get tamago_type_distance() {
+      return TypeDistance.UNION_TYPE;
+    }
+
     tamago_show() {
       const vnames = variants.map(x => x.tag);
       return `<union ${tag}: ${vnames.join(" | ")}>`;
@@ -649,6 +658,7 @@ function make_protocol(ns, name, types, init) {
       }
 
       implementations.push(implementation);
+      implementations.sort((a, b) => type_distance(a) - type_distance(b));
       return implementation;
     }
 
@@ -656,16 +666,32 @@ function make_protocol(ns, name, types, init) {
       implementations = implementations.filter(x => x !== implementation);
     }
 
+    get tamago_type_distance() {
+      return TypeDistance.PROTOCOL;
+    }
+
     tamago_has_instance(value) {
       for (const impl of implementations) {
-        for (const type of Object.values(impl.types)) {
-          if (type.tamago_has_instance(value)) {
-            return true;
+        let valid = true;
+        for (const type of impl.type_list) {
+          if (!type.tamago_has_instance(value)) {
+            valid = false;
           }
         }
+        if (valid) return true;
       }
       return false;
     }
+  }
+
+  function distance(t) {
+    return t.tamago_type_distance || 0;
+  }
+
+  function type_distance(impl) {
+    const types = impl.type_list;
+    const l = types.length - 1;
+    return types.reduce((acc, t, idx) => acc + (distance(t) * (10 ** (l - idx))), 0);
   }
 
   function make_dispatcher(method, params, default_method, required) {
@@ -728,6 +754,7 @@ function make_implementation(protocol, types, rtTypes, init) {
 
   const implementation = new class {
     get types() { return typeMap }
+    get type_list() { return rtTypes }
   }
 
   init({
@@ -941,14 +968,8 @@ function run_effects(initialFrame) {
   return promise.promise;
 }
 
-class ListCons {
-  constructor(head, tail) {
-    this.head = head;
-    this.tail = tail;
-  }
-}
 
-const list_empty = new class ListEmpty {};
+
 
 module.exports = {
   Tamago,
@@ -968,5 +989,6 @@ module.exports = {
   run_effects,
   Handler,
   ListCons,
-  list_empty
+  list_empty,
+  TypeDistance
 };
