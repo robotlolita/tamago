@@ -9,6 +9,8 @@ let parseNumber s : double = jsNative
 let parseJson s : string = jsNative
 
 let parseString (s:string) = parseJson ((s.Replace("\r\n", "\\n")).Replace("\n", "\\n"))
+
+let fixNumber (s:string) = s.Replace("_", "")
 ]%
 
 Tamago : File {
@@ -410,8 +412,8 @@ Tamago : File {
   BinaryOp = binary_op
   PrefixOp = prefix_op
 
-  Float = f:float             %[ LFloat (parseNumber f) ]%
-  Integer = i:integer         %[ LInteger i ]%
+  Float = f:float             %[ LFloat (parseNumber (fixNumber f)) ]%
+  Integer = i:integer         %[ LInteger (fixNumber i) ]%
   Boolean = b:boolean         %[ LBoolean b ]%
   String = s:string           %[ LText s ]%
 
@@ -433,8 +435,9 @@ Tamago : File {
   keyword = id ":"
 
 
-  integer = ("-" | "+")? digit+
-  float = ("-" | "+")? digit+ "." digit+
+  edigit = digit | "_"
+  integer = ("-" | "+")? ~"_" edigit+
+  float = ("-" | "+")? ~"_" edigit+ "." edigit+
 
 
   boolean =
