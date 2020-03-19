@@ -37,6 +37,13 @@ Tamago : File {
     | ModuleStatement
 
   /// Statements
+  Meta =
+    | doc_comment? Decorator*
+
+  Decorator =
+    | "@" type_ Expression
+    | "@" Expression
+
   StatementList =
     | xs:Statement+  %[xs]%
 
@@ -83,13 +90,13 @@ Tamago : File {
     | e:Name       %[ BVariable e ]%
 
   DefineStatement =
-    | define_ n:Name "=" e:TrailingExpression
+    | Meta define_ n:Name "=" e:TrailingExpression
       %[ SDefine (NStatic n, e) ]%
 
   FunctionStatement =
-    | define_ s:Signature "=" begin_ xs:StatementList t:TrailingTest
+    | Meta define_ s:Signature "=" begin_ xs:StatementList t:TrailingTest
       %[ SMulti [|makeFun s xs; t (sigToName s)|] ]%
-    | define_ s:Signature "=" e:TrailingExpression
+    | Meta define_ s:Signature "=" e:TrailingExpression
       %[ makeFun s [|SExpression e|] ]%
 
   Signature =
@@ -115,19 +122,19 @@ Tamago : File {
       %[ box (fun n -> STest (n, xs)) ]%
 
   TestStatement =
-    | test_ n:String "=" begin_ xs:StatementList end_
+    | Meta test_ n:String "=" begin_ xs:StatementList end_
       %[ let (LText n) = n in STest (n, xs) ]%
-    | test_ n:String "=" e:TrailingExpression
+    | Meta test_ n:String "=" e:TrailingExpression
       %[ let (LText n) = n in STest (n, [|SExpression e|]) ]%
   
   ModuleStatement =
-    | module_ n:Name with_ xs:StatementList end_
+    | Meta module_ n:Name with_ xs:StatementList end_
       %[ SModule (NStatic n, xs) ]%
 
   DataStatement =
-    | data_ c:UnionCase ";"
+    | Meta data_ c:UnionCase ";"
       %[ SData (NStatic (caseName c), c) ]%
-    | data_ n:Name "=" "|"? cs:NonemptyListOf<UnionCase, "|"> ";"
+    | Meta data_ n:Name "=" "|"? cs:NonemptyListOf<UnionCase, "|"> ";"
       %[ SUnion (NStatic n, cs) ]%
 
   UnionCase =
@@ -139,14 +146,14 @@ Tamago : File {
     | n:Name                    %[ FRequired n ]%
 
   HandlerStatement =
-    | default_ handler_ n:Name with_ cs:HandleCase+ end_
+    | Meta default_ handler_ n:Name with_ cs:HandleCase+ end_
       %[ SHandler(n, cs) ]%
 
   LetStatement =
-    | let_ n:NamePattern "=" e:TrailingExpression
+    | Meta let_ n:NamePattern "=" e:TrailingExpression
       %[ SLet (n, e) ]%
 
-    | let_ mutable_ n:NamePattern "=" e:TrailingExpression
+    | Meta let_ mutable_ n:NamePattern "=" e:TrailingExpression
       %[ SLetMutable (n, e) ]%
 
   LoopStatement =
@@ -231,31 +238,31 @@ Tamago : File {
       %[ SResumeWith e ]%
 
   InterfaceStatement =
-    | interface_ n:Name "(" ps:CommaList<Name> ")" with_ xs:InterfaceDefinition+ end_
+    | Meta interface_ n:Name "(" ps:CommaList<Name> ")" with_ xs:InterfaceDefinition+ end_
       %[ SInterface(n, ps, xs) ]%
 
   InterfaceDefinition =
-    | method_ s:Signature "=" e:TrailingExpression
+    | Meta method_ s:Signature "=" e:TrailingExpression
       %[ optionalProtoDef s [|SExpression e|] ]%
 
-    | method_ s:Signature begin_ xs:StatementList end_
+    | Meta method_ s:Signature begin_ xs:StatementList end_
       %[ optionalProtoDef s xs ]%
 
-    | method_ s:Signature ";"
+    | Meta method_ s:Signature ";"
       %[ requiredProtoDef s ]%
 
     | requires_ e:MemberExpression "(" ts:CommaList<Name> ")" ";"
       %[ PDRequires (e, ts) ]%
 
   ImplementStatement =
-    | implement_ p:MemberExpression "(" ps:CommaList<Expression> ")" with_ xs:ImplementDefinition+ end_
+    | Meta implement_ p:MemberExpression "(" ps:CommaList<Expression> ")" with_ xs:ImplementDefinition+ end_
       %[ SImplement (p, ps, xs) ]%
 
   ImplementDefinition =
-    | method_ s:Signature "=" e:TrailingExpression
+    | Meta method_ s:Signature "=" e:TrailingExpression
       %[ implDef s [| SExpression e |] ]%
     
-    | method_ s:Signature begin_ xs:StatementList end_
+    | Meta method_ s:Signature begin_ xs:StatementList end_
       %[ implDef s xs ]%
 
     | s:Statement
@@ -442,6 +449,7 @@ Tamago : File {
   line = (~newline any)*
   comment = "//" line
   space += comment
+  doc_comment = "/*" (~"*/" any) "*/"
 
   id_start = letter
   id_rest = letter | digit | "-"
