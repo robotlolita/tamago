@@ -1,0 +1,19 @@
+% language: tamago
+namespace test::tamago::list
+
+define test-code = begin
+  [];
+  [1];
+  [1, 2];
+  [1, 2, 3, 4];
+  let a = [4];
+  [1, 2, 3, ...a];
+
+  match [1, 2] with
+  | [] => to-do;
+  | [a] => to-do;
+  | [a, b] => to-do;
+  | [a, b, [c]] => to-do;
+  | [a, b, ...c] => to-do;
+  end
+end
