@@ -328,6 +328,14 @@ class Namespace {
     return new PerformHandle(handlers, computation);
   }
 
+  define_module(name, init) {
+    const module = new TamagoModule(this, null, name);
+    return new Thunk(() => {
+      init(module);
+      return module;
+    });
+  }
+
   run_tests() {
     const errors = [];
     console.log(`${this._id}\n${"-".repeat(this._id.length)}`);
@@ -351,6 +359,78 @@ class Namespace {
 
   tamago_show() {
     return `<namespace ${this._id}>`;
+  }
+}
+
+class TamagoModule {
+  constructor(namespace, parent, name) {
+    this._namespace = namespace;
+    this._name = name;
+    this._parent = parent;
+  }
+
+  get id() {
+    if (this._parent == null) {
+      return this._name;
+    } else {
+      return this._parent.id + "." + this._name;
+    }
+  }
+
+  expose(key, value) {
+    if (value instanceof Thunk) {
+      Object.defineProperty(this, key, {
+        get() {
+          return value.force();
+        },
+        configurable: true
+      });
+    } else {
+      Object.defineProperty(this, key, {
+        value: value,
+        configurable: true
+      });
+    }    
+  }
+
+  define_record(tag, fields) {
+    return this._namespace.define_record(this.id + "." + tag, fields);
+  }
+
+  define_union(tag, init) {
+    return this._namespace.define_union(this.id + "." + tag, init);
+  }
+
+  define_protocol(name, types, init) {
+    return this._namespace.define_protocol(this.id + "." + name, types, init);
+  }
+
+  implement_protocol(proto, types, init) {
+    return this._namespace.implement_protocol(proto, types, init);
+  }
+
+  define_test(description, test) {
+    return this._namespace.define_test(this.id + ": " + description, test);
+  }
+
+  define_handler(name, handler) {
+    return this._namespace.define_handler(this.id + "." + name, handler);
+  }
+
+  handle(computation, handlers) {
+    return this._namespace.handle(computation, handlers);
+  }
+
+  define_module(name, init) {
+    const module = new TamagoModule(this._namespace, this, name);
+    return new Thunk(() => {
+      init(module);
+      return module;
+    });
+  }
+
+  tamago_show() {
+    return `<module ${this.id} in ${this._namespace.tamago_show()}>`;
   }
 }
 

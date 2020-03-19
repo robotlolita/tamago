@@ -232,6 +232,18 @@ let rec compileStatement cc stmt =
         (jsStr desc)
         (stmtList (Seq.map (compileStatement cc) body))
   
+  | SModule(name, body) ->
+      let cc = analyseLazy cc body
+      let body = addReturns cc body
+      sprintf "
+        const %s = $self.define_module(%s, ($self) => { %s });
+        %s;
+        "
+        (compileName cc name)
+        (jsStr (maybeGetName name))
+        (stmtList (Seq.map (compileStatement cc) body))
+        (compileExport name)
+
   | SLet(name, expr) ->
       sprintf "const %s = %s;"
         (compileName cc name)
