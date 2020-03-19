@@ -1,4 +1,5 @@
 .ionide
+Tamago/Generated
 Tamago/**/obj
 Tamago/**/bin
 node_modules
