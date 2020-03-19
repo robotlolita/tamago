@@ -3,7 +3,8 @@
   "scripts": {
     "build-grammar": "fohm compile src/Syntax/Grammar.ohm --outDir src/Generated --name TamagoGrammar",
     "build-compiler": "fable-splitter --config src/splitter.config.js",
-    "build": "npm run build-grammar && npm run build-compiler"
+    "build": "npm run build-grammar && npm run build-compiler",
+    "test-compiler": "cd ../test/parsing && node ../../Tamago/tamago.js compile"
   },
   "dependencies": {
     "@babel/preset-env": "^7.7.7",
