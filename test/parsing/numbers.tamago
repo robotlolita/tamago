@@ -1,0 +1,14 @@
+% language: tamago
+namespace test::parsing::numbers
+
+define test-code = begin
+  1_000_000_000_000_000_000_000_000;
+  1000;
+  +1000;
+  -1000;
+
+  1_000.000_001;
+  1000.000001;
+  +1000.0123;
+  -1000.0123;
+end
