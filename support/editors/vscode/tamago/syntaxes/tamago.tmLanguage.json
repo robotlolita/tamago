@@ -4,7 +4,7 @@
   "patterns": [
     {
       "name": "keyword.control.tamago",
-      "match": "(?<![a-zA-Z0-9\\-\\.\\^])(namespace|do|end|let|mutable|if|then|else|and|or|not|begin|assert|unreachable|data|match|when|as|default|with|use|exposing|for|in|repeat|yield|all|process|resume|handle|handler|protocol|method|implement|requires|open|test|where|is|fun|define|type)(?![a-zA-Z0-9\\-:])"
+      "match": "(?<![a-zA-Z0-9\\-\\.\\^])(namespace|do|end|let|mutable|if|then|else|and|or|not|begin|assert|unreachable|data|match|when|as|default|with|use|exposing|for|in|repeat|yield|all|process|resume|handle|handler|interface|method|implement|requires|open|test|where|is|fun|define|type|module|to-do)(?![a-zA-Z0-9\\-:])"
     },
     {
       "name": "constant.language.tamago",
