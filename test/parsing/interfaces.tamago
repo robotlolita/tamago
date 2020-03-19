@@ -1,0 +1,21 @@
+% language: tamago
+namespace test::tamago::interfaces
+
+interface Single(a) with
+  method f(a);
+  method g(a) = f(a);
+end
+
+interface Multi(a, b) with
+  method f(a);
+  method g(a, b);
+end
+
+implement Single(nothing as type) with
+  method f(a) = 1;
+end
+
+implement Multi(nothing as type, nothing as type) with
+  method f(a) = 1;
+  method f(a, b) = 2;
+end

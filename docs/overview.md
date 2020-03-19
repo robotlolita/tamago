@@ -581,7 +581,7 @@ concrete concept of "role". A role can be:
   - An union;
   - An interface;
   - The special type `Any`;
-  - The special role `itself`, e.g.: `Integer.itself`
+  - The special role `as type`, e.g.: `Integer as type`
 
 Dispatch takes into account the *distance* from a concrete type to order the
 dispatch. And the sorting proceeds left-to-right.
@@ -632,7 +632,7 @@ of `Monad` where an implementation for `Applicative` also exists:
 
 ```
 // this is okay
-implement Applicative(Maybe.itself, Maybe) with
+implement Applicative(Maybe as type, Maybe) with
   method _ of: value = Maybe.Some { value };
   method m apply: f = begin
     match (f, m) with
@@ -646,7 +646,7 @@ implement Applicative(Maybe.itself, Maybe) with
   end
 end
 
-implement Monad(Maybe.itself, Maybe) with
+implement Monad(Maybe as type, Maybe) with
   method m chain: f = begin
     match m with
     | Maybe.Some { value } => f(value);
@@ -656,7 +656,7 @@ implement Monad(Maybe.itself, Maybe) with
 end
 
 // this is not okay, as there's no Applicative implementation for List
-implement Monad(List.itself, List) with
+implement Monad(List as type, List) with
   method m chain: f = begin
   | [] => [];
   | [x, ...xs] => f(x) ++ (xs chain: f);

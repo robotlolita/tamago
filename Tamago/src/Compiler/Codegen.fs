@@ -323,7 +323,7 @@ let rec compileStatement cc stmt =
         (stmtList (Seq.map (compileCase cc (NFresh bind)) cases))
         (compileExportAs cc (NFresh hbind) name)
 
-  | SProtocol(name, types, defs) ->
+  | SInterface(name, types, defs) ->
       sprintf "
         const %s = $self.define_protocol(%s, [%s], ($protocol) => {
           %s
@@ -452,7 +452,7 @@ and compileExpr cc expr =
         (compileExpr cc typ)
         (compileExpr cc value)
 
-  | EType(typ) ->
+  | ECastAsType(typ) ->
       sprintf "$tamago.as_type(%s)"
         (compileExpr cc typ)
 
