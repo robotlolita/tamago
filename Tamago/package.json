@@ -3,9 +3,11 @@
   "scripts": {
     "build-grammar": "fohm compile src/Syntax/Grammar.ohm --outDir src/Generated --name TamagoGrammar",
     "build-compiler": "fable-splitter --config src/splitter.config.js",
+    "build-library": "cd ../library && node ../Tamago/tamago.js compile",
     "build": "npm run build-grammar && npm run build-compiler",
     "test-compiler": "cd ../test/parsing && node ../../Tamago/tamago.js compile",
-    "test": "npm run test-compiler"
+    "test-library": "cd ../library && node ../Tamago/tamago.js test",
+    "test": "npm run test-compiler && npm run test-library"
   },
   "dependencies": {
     "@babel/preset-env": "^7.7.7",
