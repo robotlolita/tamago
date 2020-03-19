@@ -356,8 +356,8 @@ class Namespace {
         console.log(cred(`❌ ${test.describe()}`));
         console.log(cred(indent(4, result.error.stack)));
         console.log("---");
+        errors.push(result.error);
       }
-      errors.push(test.run());
     }
     return errors;
   }
