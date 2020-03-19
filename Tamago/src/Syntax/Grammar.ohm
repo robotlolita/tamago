@@ -192,7 +192,7 @@ Tamago : File {
   Pattern =
     | p:Pattern as_ n:Name                                    %[ PBindAs (p, (NStatic n)) ]%
     | l:LiteralExpression                                     %[ PLiteral l ]%
-    | "[" ps:CommaList<Pattern> "]"                           %[ PTuple ps ]%
+    | "#(" ps:CommaList<Pattern> ")"                          %[ PTuple ps ]%
     | "{" ps:CommaList<PairPattern> "}"                       %[ PRecord ps ]%
     | "^" e:Expression                                        %[ PEqual e ]%
     | p:Pattern is_ e:MemberExpression                        %[ PCheck (p, e) ]%
@@ -345,7 +345,7 @@ Tamago : File {
     | "(" e:Expression ")"      %[ e ]%
 
   TupleExpression =
-    | "[" xs:CommaList<Expression> "]"
+    | "#(" xs:CommaList<Expression> ")"
       %[ ETuple xs ]%
 
   BeginExpression =

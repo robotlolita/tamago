@@ -18,7 +18,7 @@ data structures.
   - **Unicode text**: `"私はOKです 😊"`;
   - **Logical/boolean**: `true`, `false`;
   - **Special unit/null value**: `nothing`;
-  - **Tuples**: `(1, 2, 3)`;
+  - **Tuples**: `#(1, 2, 3)`;
   - **Linked lists**: `[1, 2, 3, ...tail]`;
   - **Anonymous records**: `{ label: value }`;
   - **Tagged records**: `Tag { label: value }`;
@@ -148,9 +148,9 @@ more specialised form of pattern matching.
 The syntax is very similar to what you'd see in a ML language:
 
 ```
-match (a, b) with
-| (_ is Integer, 1) when a > 1 => a;
-| (_, _) => 1;
+match #(a, b) with
+| #(_ is Integer, 1) when a > 1 => a;
+| #(_, _) => 1;
 end
 ```
 
@@ -159,7 +159,7 @@ Tamago supports the following patterns:
   - `pattern as name` -- matches if `pattern` matches, binds the outer value to `name`;
   - `name` -- matches anything, binds it to `name`;
   - `1`, `"foo"`, `true`, `nothing` -- matches if the value equals the literal;
-  - `(p1, p2, p3)` -- matches a tuple of the given arity, if all subpatterns match;
+  - `#(p1, p2, p3)` -- matches a tuple of the given arity, if all subpatterns match;
   - `[p1, p2, ...p3]` -- matches a list of the given shape, if all subpatterns match;
   - `{ l: p1 }` -- matches a record if it contains at least the given labels, and the values match the provided patterns;
   - `Tag { l: p1 }` -- matches a tagged record if it contains at least the given labels, and the values match the provided patterns;
