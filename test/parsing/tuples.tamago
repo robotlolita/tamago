@@ -1,0 +1,16 @@
+% language: tamago
+namespace test::tamago::tuples
+
+define test-code = begin
+  #();
+  #(1);
+  #(1, 2);
+  #(1, 2, 3, 4);
+
+  match #(1, 2) with
+  | #() => to-do;
+  | #(a) => to-do;
+  | #(a, b) => to-do;
+  | #(a, b, c, d) => to-do;
+  end
+end
