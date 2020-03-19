@@ -172,7 +172,9 @@ future:
     the same operator, so one needs to write `((1 + 2) + 3) + 4` instead of
     `1 + 2 + 3 + 4`;
 
-
+  - `to-do` holes currently crash if the sub-expression is ever evaluated.
+    In the future they'll behave like [Hazel's typed holes](https://hazel.org/),
+    allowing computation to continue and just preventing full reduction.
 
 
 ## Licence
