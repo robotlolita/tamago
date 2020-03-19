@@ -34,6 +34,7 @@ Tamago : File {
     | ProtocolStatement
     | ImplementStatement
     | HandlerStatement
+    | ModuleStatement
 
   /// Statements
   StatementList =
@@ -56,6 +57,7 @@ Tamago : File {
     | ResumeStatement
     | ProtocolStatement
     | ImplementStatement
+    | ModuleStatement
     | e:TrailingExpression  %[ SExpression e ]%
 
   UseStatement =
@@ -118,6 +120,10 @@ Tamago : File {
     | test_ n:String "=" e:TrailingExpression
       %[ let (LText n) = n in STest (n, [|SExpression e|]) ]%
   
+  ModuleStatement =
+    | module_ n:Name with_ xs:StatementList end_
+      %[ SModule (NStatic n, xs) ]%
+
   DataStatement =
     | data_ c:UnionCase ";"
       %[ SData (NStatic (caseName c), c) ]%
@@ -536,6 +542,7 @@ Tamago : File {
   fun_ = kw<"fun">
   define_ = kw<"define">
   type_ = kw<"type">
+  module_ = kw<"module">
 
   reserved =
     | namespace_ | do_ | end_ 
@@ -547,5 +554,5 @@ Tamago : File {
     | yield_ | all_ | process_ | resume_ | handle_
     | handler_ | protocol_ | method_ | implement_
     | requires_ | open_ | test_ | where_ | is_ | fun_
-    | define_ | type_
+    | define_ | type_ | module_
 }

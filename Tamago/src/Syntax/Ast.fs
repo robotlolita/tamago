@@ -30,6 +30,7 @@ and Statement =
   | SProtocol of name:string * types:string[] * ProtocolDefinition[]
   | SImplement of Expression * types:Expression[] * ImplementStatement[]
   | SUnreachable of message:string
+  | SModule of Name * Statement[]
   | SMulti of Statement[]
   | SReturn of Expression
 

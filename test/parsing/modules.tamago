@@ -1,0 +1,35 @@
+% language: tamago
+namespace test::tamago::modules
+
+module Module1 with
+  use a as b;
+  open b exposing _ x;
+  define c = 1;
+  define _ d = 1;
+  test "description" = 1;
+  data E { x };
+  data F =
+    | A { x }
+    | B { x };
+  let g = 1;
+
+  for a in #() begin break; end
+  repeat break; end
+  match #() with
+  | #() => 1;
+  end
+
+  assert true;
+
+  protocol A(a) with
+    method f(a);
+  end
+
+  implement A(Integer) with
+    method f(a) = 1;
+  end
+
+  module Nested with
+    data A { x };
+  end
+end
