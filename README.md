@@ -166,6 +166,15 @@ future:
   - [ ] Property-based testing layer;
 
 
+## Known issues
+
+  - Infix application currently requires parenthesis even in sequences of
+    the same operator, so one needs to write `((1 + 2) + 3) + 4` instead of
+    `1 + 2 + 3 + 4`;
+
+
+
+
 ## Licence
 
 Tamago is copyright (c) Quildreen Motta 2019-2020, and released under the MIT
