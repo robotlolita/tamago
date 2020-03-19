@@ -27,7 +27,7 @@ and Statement =
   | SContinueWith of RepeatBinding[]
   | SBreak
   | SResumeWith of Expression
-  | SProtocol of name:string * types:string[] * ProtocolDefinition[]
+  | SInterface of name:string * types:string[] * ProtocolDefinition[]
   | SImplement of Expression * types:Expression[] * ImplementStatement[]
   | SUnreachable of message:string
   | SModule of Name * Statement[]
@@ -49,7 +49,7 @@ and Expression =
   | EUpdate of Expression * PairExpression[]
   | EProject of Expression * Label
   | ECheck of contract:Expression * Expression
-  | EType of Expression
+  | ECastAsType of Expression
   | EProcess of Statement[]
   | EDo of Statement[]
   | EHandle of Statement[] * MatchCase[]

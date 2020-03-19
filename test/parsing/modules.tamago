@@ -21,7 +21,7 @@ module Module1 with
 
   assert true;
 
-  protocol A(a) with
+  interface A(a) with
     method f(a);
   end
 

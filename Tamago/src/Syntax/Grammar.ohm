@@ -31,7 +31,7 @@ Tamago : File {
     | FunctionStatement
     | TestStatement
     | DataStatement
-    | ProtocolStatement
+    | InterfaceStatement
     | ImplementStatement
     | HandlerStatement
     | ModuleStatement
@@ -55,7 +55,7 @@ Tamago : File {
     | AssignStatement
     | AssertStatement
     | ResumeStatement
-    | ProtocolStatement
+    | InterfaceStatement
     | ImplementStatement
     | ModuleStatement
     | e:TrailingExpression  %[ SExpression e ]%
@@ -230,11 +230,11 @@ Tamago : File {
     | resume_ with_ e:Expression ";"
       %[ SResumeWith e ]%
 
-  ProtocolStatement =
-    | protocol_ n:Name "(" ps:CommaList<Name> ")" with_ xs:ProtocolDefinition+ end_
-      %[ SProtocol(n, ps, xs) ]%
+  InterfaceStatement =
+    | interface_ n:Name "(" ps:CommaList<Name> ")" with_ xs:InterfaceDefinition+ end_
+      %[ SInterface(n, ps, xs) ]%
 
-  ProtocolDefinition =
+  InterfaceDefinition =
     | method_ s:Signature "=" e:TrailingExpression
       %[ optionalProtoDef s [|SExpression e|] ]%
 
@@ -321,8 +321,8 @@ Tamago : File {
   UnaryExpression =
     | op:PrefixOp s:ApplyExpression
       %[ EApply (EVariable (prefixName op), [|s|]) ]%
-    | type_ s:ApplyExpression
-      %[ EType s ]%
+    | s:ApplyExpression as_ type_
+      %[ ECastAsType s ]%
     | s:ApplyExpression n:Name
       %[ EApply (EVariable (unaryName n), [|s|]) ]%
     | ApplyExpression
@@ -532,7 +532,7 @@ Tamago : File {
   resume_ = kw<"resume">
   handle_ = kw<"handle">
   handler_ = kw<"handler">
-  protocol_ = kw<"protocol">
+  interface_ = kw<"interface">
   method_ = kw<"method">
   implement_ = kw<"implement">
   requires_ = kw<"requires">
@@ -554,7 +554,7 @@ Tamago : File {
     | data_ | match_ | when_ | as_ | default_ | with_
     | use_ | exposing_ | for_ | in_ | repeat_
     | yield_ | all_ | process_ | resume_ | handle_
-    | handler_ | protocol_ | method_ | implement_
+    | handler_ | interface_ | method_ | implement_
     | requires_ | open_ | test_ | where_ | is_ | fun_
     | define_ | type_ | module_ | todo_
 }
