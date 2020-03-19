@@ -94,6 +94,10 @@ class Tamago {
     throw new Panic(`Unreachable ${message}`);
   }
 
+  unimplemented() {
+    throw new Panic(`Unimplemented`);
+  }
+
   use_natives() {
     load_natives(this);
   }
