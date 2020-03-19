@@ -449,7 +449,7 @@ Tamago : File {
   line = (~newline any)*
   comment = "//" line
   space += comment
-  doc_comment = "/*" (~"*/" any) "*/"
+  doc_comment = "/*" (~"*/" any)* "*/"
 
   id_start = letter
   id_rest = letter | digit | "-"
