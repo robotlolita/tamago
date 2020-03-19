@@ -1,5 +1,5 @@
 .ionide
-Tamago/Generated
+Tamago/src/Generated/
 Tamago/**/obj
 Tamago/**/bin
 node_modules
