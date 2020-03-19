@@ -67,9 +67,11 @@ const prepare = (cwd) => {
   for (const m of stdlib) {
     Tamago._namespaces.set(m._id, m);
   }
-
-  for (const file of tamagoJsFiles(cwd)) {
-    require(file)(Tamago);
+  
+  if (path.resolve(cwd) !== path.resolve(libraryRoot)) {
+    for (const file of tamagoJsFiles(cwd)) {
+      require(file)(Tamago);
+    }
   }
 
   Tamago.initialise();
