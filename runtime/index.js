@@ -137,6 +137,22 @@ class Tamago {
     }
   }
 
+  list_cons(head, tail) {
+    return new ListCons(head, tail);
+  }
+
+  list_empty() {
+    return list_empty;
+  }
+
+  is_list_cons(x) {
+    return x instanceof ListCons;
+  }
+
+  is_list_empty(x) {
+    return x === list_empty;
+  }
+
   equals(a, b) {
     return equals(a, b);
   }
@@ -841,6 +857,15 @@ function run_effects(initialFrame) {
   return promise.promise;
 }
 
+class ListCons {
+  constructor(head, tail) {
+    this.head = head;
+    this.tail = tail;
+  }
+}
+
+const list_empty = new class ListEmpty {};
+
 module.exports = {
   Tamago,
   Namespace,
@@ -857,5 +882,7 @@ module.exports = {
   PerformHandle,
   PerformValue,
   run_effects,
-  Handler
+  Handler,
+  ListCons,
+  list_empty
 };

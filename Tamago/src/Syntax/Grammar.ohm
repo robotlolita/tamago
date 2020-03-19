@@ -190,15 +190,17 @@ Tamago : File {
       %[ MCDefault s ]%
 
   Pattern =
-    | p:Pattern as_ n:Name                                    %[ PBindAs (p, (NStatic n)) ]%
-    | l:LiteralExpression                                     %[ PLiteral l ]%
-    | "#(" ps:CommaList<Pattern> ")"                          %[ PTuple ps ]%
-    | "{" ps:CommaList<PairPattern> "}"                       %[ PRecord ps ]%
-    | "^" e:Expression                                        %[ PEqual e ]%
-    | p:Pattern is_ e:MemberExpression                        %[ PCheck (p, e) ]%
-    | e:MemberExpression "{" ps:CommaList<PairPattern> "}"    %[ PExtractRecord (e, ps) ]%
-    | hole                                                    %[ PAnything ]%
-    | n:Name                                                  %[ PBind (NStatic n) ]%
+    | p:Pattern as_ n:Name                                          %[ PBindAs (p, (NStatic n)) ]%
+    | l:LiteralExpression                                           %[ PLiteral l ]%
+    | "#(" ps:CommaList<Pattern> ")"                                %[ PTuple ps ]%
+    | "[" hd:NonemptyListOf<Pattern, ","> "," "..." tl:Pattern "]"  %[ makeListPattern hd tl ]%
+    | "[" xs:CommaList<Pattern> "]"                                 %[ makeListPattern xs PEmpty ]%
+    | "{" ps:CommaList<PairPattern> "}"                             %[ PRecord ps ]%
+    | "^" e:Expression                                              %[ PEqual e ]%
+    | p:Pattern is_ e:MemberExpression                              %[ PCheck (p, e) ]%
+    | e:MemberExpression "{" ps:CommaList<PairPattern> "}"          %[ PExtractRecord (e, ps) ]%
+    | hole                                                          %[ PAnything ]%
+    | n:Name                                                        %[ PBind (NStatic n) ]%
   
   PairPattern =
     | l:Name "=" e:Pattern
@@ -334,6 +336,7 @@ Tamago : File {
 
   PrimaryExpression =
     | TupleExpression
+    | ListExpression
     | RecordExpression
     | BeginExpression
     | DoExpression
@@ -347,6 +350,12 @@ Tamago : File {
   TupleExpression =
     | "#(" xs:CommaList<Expression> ")"
       %[ ETuple xs ]%
+
+  ListExpression =
+    | "[" hd:NonemptyListOf<Expression, ","> "," "..." tl:Expression "]"
+      %[ makeList hd tl ]%
+    | "[" xs:CommaList<Expression> "]"
+      %[ makeList xs EEmpty ]%
 
   BeginExpression =
     | begin_ xs:StatementList end_

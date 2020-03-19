@@ -415,6 +415,14 @@ and compileExpr cc expr =
       sprintf "[%s]"
         (commaList (Seq.map (compileExpr cc) items))
 
+  | ECons (hd, tl) ->
+      sprintf "$tamago.list_cons(%s, %s)"
+        (compileExpr cc hd)
+        (compileExpr cc tl)
+  
+  | EEmpty ->
+      "$tamago.list_empty()"
+
   | EBlock(stmts) ->
       let cc = analyseLazy cc stmts
       let body = addReturns cc stmts
@@ -532,6 +540,32 @@ and compileCase cc bind kase =
           (ps.Length)
           (stmtList (Seq.map (unpackBind cc n) project))
           (foldCase cc binds body)
+
+    | PCons (hd, tl) ->
+        let hdBind = NFresh (fresh "match")
+        let tlBind = NFresh (fresh "match")
+        sprintf "
+          if ($tamago.is_list_cons(%s)) {
+            const %s = (%s).head;
+            const %s = (%s).tail;
+            %s;
+          }
+          "
+          (compileName cc n)
+          (compileName cc hdBind)
+          (compileName cc n)
+          (compileName cc tlBind)
+          (compileName cc n)
+          (foldCase cc [(hdBind, hd); (tlBind, tl)] body)
+
+    | PEmpty ->
+        sprintf "
+          if ($tamago.is_list_empty(%s)) {
+            %s;
+          }
+          "
+          (compileName cc n)
+          body
 
     | PRecord ps ->
         let project =

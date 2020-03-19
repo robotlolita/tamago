@@ -41,6 +41,8 @@ and Expression =
   | ELambda of Parameter[] * Statement[]
   | EVariable of Name
   | ETuple of Expression[]
+  | ECons of Expression * Expression
+  | EEmpty
   | EBlock of Statement[]
   | ERecord of PairExpression[]
   | EUpdate of Expression * PairExpression[]
@@ -108,6 +110,8 @@ and Pattern =
   | PLiteral of Literal
   | PEqual of Expression
   | PTuple of Pattern[]
+  | PCons of Pattern * Pattern
+  | PEmpty
   | PRecord of PairPattern[]
   | PCheck of Pattern * Expression
   | PExtractRecord of Expression * PairPattern[]
@@ -241,3 +245,14 @@ let makeLambda expr =
   let expr' = replaceHoles expr
   let ps = collectHoles expr'
   ELambda (Array.ofSeq ps, [|SExpression expr'|])
+
+let makeListPattern hd tl =
+  Seq.foldBack (fun a b -> PCons(a, b))
+               hd
+               tl
+
+let makeList hd tl =
+  Seq.foldBack (fun a b -> ECons (a, b))
+               hd
+               tl
+
