@@ -351,6 +351,7 @@ Tamago : File {
     | l:LiteralExpression       %[ ELiteral l ]%
     | n:Name                    %[ EVariable (NStatic n) ]%
     | hole                      %[ EHole ]%
+    | todo_                     %[ ETodo ]%
     | "(" e:Expression ")"      %[ e ]%
 
   TupleExpression =
@@ -543,6 +544,7 @@ Tamago : File {
   define_ = kw<"define">
   type_ = kw<"type">
   module_ = kw<"module">
+  todo_ = kw<"to-do">
 
   reserved =
     | namespace_ | do_ | end_ 
@@ -554,5 +556,5 @@ Tamago : File {
     | yield_ | all_ | process_ | resume_ | handle_
     | handler_ | protocol_ | method_ | implement_
     | requires_ | open_ | test_ | where_ | is_ | fun_
-    | define_ | type_ | module_
+    | define_ | type_ | module_ | todo_
 }

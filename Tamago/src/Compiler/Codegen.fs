@@ -513,6 +513,9 @@ and compileExpr cc expr =
         (compileExpr cc object)
         (compileKey cc label)
        
+  | ETodo ->
+      "$tamago.unimplemented()"
+
   | EHole ->
       failwithf "internal: Found a hole during codegen"
 

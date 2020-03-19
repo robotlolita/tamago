@@ -1,0 +1,6 @@
+% language: tamago
+namespace test::tamago::to-do
+
+define test-code = begin
+  to-do;
+end
