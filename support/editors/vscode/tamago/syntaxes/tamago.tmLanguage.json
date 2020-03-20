@@ -12,7 +12,7 @@
     },
     {
       "name": "comment.line.heading.tamago",
-      "match": "%[^\\n\\r]*"
+      "match": "%[^\\n\\r]*|#[^\\(][^\\n\\r]*"
     },
     {
       "name": "constant.numeric.integer.binary.tamago",

@@ -15,7 +15,7 @@ let fixNumber (s:string) = s.Replace("_", "")
 
 Tamago : File {
   File =
-    | Header namespace_ ns:Namespace defs:DeclarationList end
+    | Header Meta namespace_ ns:Namespace defs:DeclarationList end
       %[ file ns defs ]%
   
   Header =
@@ -35,6 +35,7 @@ Tamago : File {
     | ImplementStatement
     | HandlerStatement
     | ModuleStatement
+    | MetaStatement
 
   /// Statements
   Meta =
@@ -65,7 +66,12 @@ Tamago : File {
     | InterfaceStatement
     | ImplementStatement
     | ModuleStatement
+    | MetaStatement
     | e:TrailingExpression  %[ SExpression e ]%
+
+  MetaStatement =
+    | "#" kw<"category"> x:line
+      %[ SMeta (MECategory x) ]%
 
   UseStatement =
     | use_ ns:Namespace n:UseAlias bs:UseExposing ";"
@@ -447,9 +453,9 @@ Tamago : File {
   // -- Lexemes
   newline = "\n" | "\r"
   line = (~newline any)*
-  comment = "//" line
+  comment = "//" ~"/" line
   space += comment
-  doc_comment = "/*" (~"*/" any)* "*/"
+  doc_comment = ("///" line newline)+
 
   id_start = letter
   id_rest = letter | digit | "-"

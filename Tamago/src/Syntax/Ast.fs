@@ -32,7 +32,11 @@ and Statement =
   | SUnreachable of message:string
   | SModule of Name * Statement[]
   | SMulti of Statement[]
+  | SMeta of MetaExpression
   | SReturn of Expression
+
+and MetaExpression =
+  | MECategory of string
 
 and DataDefinition = 
   | DDRecord of Tag * Field[]

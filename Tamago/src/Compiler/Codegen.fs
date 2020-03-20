@@ -177,6 +177,9 @@ let rec compileStatement cc stmt =
   | SOpen(EVariable alias, bindings) ->
       (stmtList (Seq.map (unpackBinding cc alias) bindings))
 
+  | SMeta _ ->
+      ""
+
   | SOpen(m, bindings) ->
       let alias = NFresh (fresh "open")
       sprintf "
