@@ -1,23 +1,18 @@
 % language: tamago
+/// Boolean values
 namespace tamago::base::boolean
 
 use tamago::native::unsafe::boolean as Native;
 use tamago::native::unsafe::type as Types;
 
-/*
- * The boolean type, accepting the values `true` and `false`.
- */
+/// The boolean type, accepting the values `true` and `false`.
 define Boolean = Types.Boolean;
 
 
-/*
- * Logical conjunction.
- */
+/// Logical conjunction
 @type fun(Boolean, Boolean) -> Boolean
 define left and right =
 begin
-  assert left is Boolean;
-  assert right is Boolean;
   Native.and(left, right);
 where
   assert true and true ==> true;
@@ -26,14 +21,10 @@ where
   assert false and false ==> false;
 end
 
-/*
- * Logical disjunction.
- */
+/// Logical disjunction
 @type fun(Boolean, Boolean) -> Boolean
 define left or right =
 begin
-  assert left is Boolean;
-  assert right is Boolean;
   Native.or(left, right);
 where
   assert true or true ==> true;
@@ -42,13 +33,10 @@ where
   assert false or false ==> false;
 end
 
-/*
- * Logical negation.
- */
+/// Logical negation
 @type fun(Boolean) -> Boolean
 define not value =
 begin
-  assert value is Boolean;
   Native.not(value);
 where
   assert not true ==> false;
