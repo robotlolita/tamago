@@ -1,0 +1,29 @@
+% language: tamago
+namespace tamago::text
+
+use tamago::native::unsafe::types as Types;
+use tamago::native::unsafe::text as N;
+
+#category Types
+define Text = Types.Text;
+
+#category Combining text
+define self ++ that =
+  N.concat(self, that);
+
+#category Text views
+define self to-code-points =
+  N.to-code-points(self);
+
+define self to-characters =
+  N.to-characters(self);
+
+#category Creating text
+define self repeat: times =
+  N.repeat(self, times);
+
+define from-code-points: code-points =
+  N.from-code-points(units);
+
+define from-characters: characters =
+  N.from-characters(characters);

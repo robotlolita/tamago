@@ -1,0 +1,14 @@
+% language: tamago
+namespace tamago::text::character
+
+use tamago::native::unsafe::types as Types;
+use tamago::native::unsafe::character as N;
+
+#category Types
+define Character = Types.Character;
+
+#category Conversions
+define self to-code-point = N.code-point(self);
+define from-code-point: point = N.from-code-point(self);
+
+define self to-text = N.to-text(self);
