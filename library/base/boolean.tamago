@@ -5,40 +5,19 @@ namespace tamago::base::boolean
 use tamago::native::unsafe::boolean as N;
 use tamago::native::unsafe::types as Types;
 
-/// The boolean type, accepting the values `true` and `false`.
 define Boolean = Types.Boolean;
 
+define self and that =
+  N.and(self, that);
 
-/// Logical conjunction
-@type fun(Boolean, Boolean) -> Boolean
-define left and right =
-begin
-  N.and(left, right);
-where
-  assert true and true ==> true;
-  assert true and false ==> false;
-  assert false and true ==> false;
-  assert false and false ==> false;
-end
+define self or that =
+  N.or(self, that);
 
-/// Logical disjunction
-@type fun(Boolean, Boolean) -> Boolean
-define left or right =
-begin
-  N.or(left, right);
-where
-  assert true or true ==> true;
-  assert true or false ==> true;
-  assert false or true ==> true;
-  assert false or false ==> false;
-end
+define not self =
+  N.not(self);
 
-/// Logical negation
-@type fun(Boolean) -> Boolean
-define not value =
-begin
-  N.not(value);
-where
-  assert not true ==> false;
-  assert not false ==> true;
-end
+define self === that =
+  N.eq(self, that);
+
+define self =/= that =
+  N.not-eq(self, that);
