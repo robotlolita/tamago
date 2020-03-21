@@ -1,0 +1,77 @@
+% language: tamago
+namespace tamago::base::optional
+
+use tamago::unsafe::native::panic as Panic;
+
+define self then: transform =
+begin
+  match self with
+  | nothing => nothing;
+  | value => transform(value)
+  end
+end
+
+define self then: transform or-else: recover =
+begin
+  match self with
+  | nothing => recover();
+  | value => transform(value);
+  end
+end
+
+define self then: transform or-default: default-value =
+begin
+  match self with
+  | nothing => default-value;
+  | value => transform(value);
+  end
+end
+
+define self or-else: recover =
+begin
+  match self with
+  | nothing => recover();
+  | value => value;
+  end
+end
+
+define self or-default: default-value =
+begin
+  match self with
+  | nothing => default-value;
+  | value => value;
+  end
+end
+
+define self panic-if-absent: message =
+begin
+  match self with
+  | nothing => Panic.raise: message;
+  | value => value;
+  end
+end
+
+define self is-present =
+begin
+  match self with
+  | nothing => false;
+  | _ => true;
+  end
+end
+
+define self is-absent =
+begin
+  match self with
+  | nothing => true;
+  | _ => false;
+  end
+end
+
+define self to-iterator =
+process
+  match self with
+  | nothing => nothing;
+  | value => yield value;
+  end
+end
+
