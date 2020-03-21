@@ -1,0 +1,127 @@
+% language: tamago
+namespace tamago::maths::float64
+
+use tamago::native::unsafe::types as Types;
+use tamago::native::unsafe::float64 as N;
+use tamago::base::ordering exposing less-than, equal, greater-than;
+
+
+#category Types
+define Float64 = Types.Float64;
+
+# category Comparison
+define self === that = N.eq(self, that);
+define self =/= that = N.not-eq(self, that);
+
+define self compare-to: that =
+  N.compare(self, that, less-than, equal, greater-than);
+
+define self < that = N.lt(self, that);
+define self <= that = N.lte(self, that);
+define self > that = N.gt(self, that);
+define self >= that = N.gte(self, that);
+
+#category Arithmetic
+define self + that = N.add(self, that);
+define self - that = N.sub(self, that);
+define self * that = N.mul(self, that);
+define self / that = N.div(self, that);
+
+define self remainder: that = N.remainder(self, that);
+
+define self divide-and-remainder: that =
+  {
+    result = self / that,
+    remainder = self divide-and-remainder: that
+  };
+
+define self ** that = N.power(self, that);
+
+#category Bitwise
+define self bit-shift-right: bits =
+  N.bit-shr(self, bits);
+
+define self bit-unsigned-shift-right: bits =
+  N.bit-unsigned-shr(self, bits);
+
+define self bit-shift-left: bits =
+  N.bit-shl(self, bits);
+
+define self bit-and: mask =
+  N.bit-and(self, mask);
+
+define self bit-or: mask =
+  N.bit-or(self, mask);
+
+define self bit-xor: mask =
+  N.bit-xor(self, mask);
+
+define self bit-not =
+  N.bit-not(self);
+
+define self bit-at: position =
+  N.bit-at(self, position);
+
+define self bit-set-at: position =
+  N.bit-set(self, position);
+
+define self bit-clear-at: position =
+  N.bit-clear(self, position);
+
+define self bit-toggle-at: position =
+  N.bit-toggle(self, position);
+
+#category Conversions
+define self to-integer =
+  N.to-integer(self);
+
+define self to-digits-with-radix: radix =
+  N.to-digits(self, radix);
+
+define self to-binary-digits =
+  self to-digits-with-radix: 2;
+
+define self to-decimal-digits =
+  self to-digits-with-radix: 10;
+
+define self to-hexadecimal-digits =
+  self to-digits-with-radix: 16;
+
+#category IEE754 floating points
+define maximum-value = N.max-value;
+define minimum-value = N.min-value;
+
+define highest-safe-integer = N.max-safe-integer;
+define lowest-safe-integer = N.min-safe-integer;
+
+define nan = N.nan;
+define positive-infinity = N.positive-infinity;
+define negative-infinity = N.negative-infinity;
+
+
+define self is-nan =
+  N.is-nan(self);
+
+define self is-finite =
+  N.is-finite(self);
+
+define self is-integer =
+  N.is-integer(self);
+
+define self is-safe-integer =
+  N.is-safe-integer(self);
+
+define self absolute =
+  N.abs(self);
+
+define self rounded-down =
+  N.floor(self);
+
+define self rouned-up =
+  N.ceil(self);
+
+define self rounded =
+  N.round(self);
+
+define self truncated =
+  N.truncate(self);

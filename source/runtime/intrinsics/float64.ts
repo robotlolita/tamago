@@ -114,10 +114,7 @@ export function to_digits(a: number, base: bigint) {
 
 
 //== Floating point
-export function max_value() {
-  return Number.MAX_VALUE;
-}
-
+export const max_value = Number.MAX_VALUE;
 export const min_value = Number.MIN_VALUE;
 export const max_safe_integer = Number.MAX_SAFE_INTEGER;
 export const min_safe_integer = Number.MIN_SAFE_INTEGER;
