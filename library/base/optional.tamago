@@ -1,7 +1,7 @@
 % language: tamago
 namespace tamago::base::optional
 
-use tamago::unsafe::native::panic as Panic;
+use tamago::native::unsafe::panic as Panic;
 
 define self then: transform =
 begin

@@ -2,8 +2,8 @@
 /// Boolean values
 namespace tamago::base::boolean
 
-use tamago::native::unsafe::boolean as Native;
-use tamago::native::unsafe::type as Types;
+use tamago::native::unsafe::boolean as N;
+use tamago::native::unsafe::types as Types;
 
 /// The boolean type, accepting the values `true` and `false`.
 define Boolean = Types.Boolean;
@@ -13,7 +13,7 @@ define Boolean = Types.Boolean;
 @type fun(Boolean, Boolean) -> Boolean
 define left and right =
 begin
-  Native.and(left, right);
+  N.and(left, right);
 where
   assert true and true ==> true;
   assert true and false ==> false;
@@ -25,7 +25,7 @@ end
 @type fun(Boolean, Boolean) -> Boolean
 define left or right =
 begin
-  Native.or(left, right);
+  N.or(left, right);
 where
   assert true or true ==> true;
   assert true or false ==> true;
@@ -37,7 +37,7 @@ end
 @type fun(Boolean) -> Boolean
 define not value =
 begin
-  Native.not(value);
+  N.not(value);
 where
   assert not true ==> false;
   assert not false ==> true;

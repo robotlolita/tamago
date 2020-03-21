@@ -112,3 +112,51 @@ export function to_digits(a: number, base: bigint) {
   return a.toString(baseF).split("").map(x => BigInt(parseInt(x, baseF)));
 }
 
+
+//== Floating point
+export function max_value() {
+  return Number.MAX_VALUE;
+}
+
+export const min_value = Number.MIN_VALUE;
+export const max_safe_integer = Number.MAX_SAFE_INTEGER;
+export const min_safe_integer = Number.MIN_SAFE_INTEGER;
+export const nan = Number.NaN;
+export const positive_infinity = Number.POSITIVE_INFINITY;
+export const negative_infinity = Number.NEGATIVE_INFINITY;
+
+export function is_nan(a: number) {
+  return Number.isNaN(a);
+}
+
+export function is_finite(a: number) {
+  return Number.isFinite(a);
+}
+
+export function is_integer(a: number) {
+  return Number.isInteger(a);
+}
+
+export function is_safe_integer(a: number) {
+  return Number.isSafeInteger(a);
+}
+
+export function abs(a: number) {
+  return Math.abs(a);
+}
+
+export function floor(a: number) {
+  return Math.floor(a);
+}
+
+export function ceil(a: number) {
+  return Math.ceil(a);
+}
+
+export function round(a: number) {
+  return Math.round(a);
+}
+
+export function truncate(a: number) {
+  return Math.trunc(a);
+}
