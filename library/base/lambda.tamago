@@ -1,0 +1,11 @@
+% language: tamago
+namespace tamago::base::lambda
+
+/// Right-to-left composition
+define f << g =
+  fun(x) -> f(g(x));
+
+/// Left-to-right composition
+define f >> g =
+  fun(x) -> g(f(x));
+
