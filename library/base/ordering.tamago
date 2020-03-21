@@ -1,15 +1,61 @@
 % language: tamago
 namespace tamago::base::ordering
 
+use tamago::base::boolean exposing not _;
+
+#category Data types
 data Ordering =
   | Less-Than {}
   | Equal {}
   | Greater-Than {}
 
-define less-than = Ordering.Less-Than {};
-define equal = Ordering.Equal {};
-define greater-than = Ordering.Greater-Than {};
+open Ordering exposing Less-Than, Equal, Greater-Than;
 
+define less-than = Less-Than {};
+define equal = Equal {};
+define greater-than = Greater-Than {};
+
+#category Comparisons
+define self compare-to: that =
+begin
+  match self with
+  | Less-Than {} =>
+      match that with
+      | Less-Than {} => equal;
+      | Equal {} => greater-than;
+      | Greater-Than {} => greater-than;
+      end
+
+  | Equal {} =>  
+      match that with
+      | Less-Than {} => less-than;
+      | Equal {} => equal;
+      | Greater-Than {} => greater-than;
+      end
+
+  | Greater-Than {} =>
+      match that with
+      | Less-Than {} => less-than;
+      | Equal {} => less-than;
+      | Greater-Than {} => greater-than;
+      end
+  end
+end
+
+define self === that =
+begin
+  match #(self, that) with
+  | #(Less-Than {}, Less-Than {}) => true;
+  | #(Equal {}, Equal {}) => true;
+  | #(Greater-Than {}, Greater-Than {}) => true;
+  | _ => false;
+  end
+end
+
+define self =/= that =
+  not (self === that);
+
+#category Conversions
 define from-integer: value =
 begin
   if value < 0 then
@@ -24,8 +70,8 @@ end
 define ordering to-integer =
 begin
   match ordering with
-  | Ordering.Less-Than {} => -1;
-  | Ordering.Equal {} => 0;
-  | Ordering.Greater-Than {} => 1;
+  | Less-Than {} => -1;
+  | Equal {} => 0;
+  | Greater-Than {} => 1;
   end
 end
