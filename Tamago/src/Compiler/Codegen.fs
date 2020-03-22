@@ -711,9 +711,8 @@ and compileProtocolDefinition cc def =
       let body = addReturns cc body
       let types = Seq.map (maybeGetName >> jsStr) parameters
       sprintf "
-        const %s = $protocol.optional_method(%s, [%s], function %s(%s) { %s });
+        $protocol.optional_method(%s, [%s], function %s(%s) { %s });
         "
-        (toSafeId name)
         (jsStr name)
         (commaList types)
         (toSafeId name)
@@ -722,8 +721,7 @@ and compileProtocolDefinition cc def =
 
   | PDRequiredMethod (name, parameters) ->
       let types = Seq.map (maybeGetName >> jsStr) parameters
-      sprintf "const %s = $protocol.required_method(%s, [%s])"
-        (toSafeId name)
+      sprintf "$protocol.required_method(%s, [%s]);"
         (jsStr name)
         (commaList types)
 
