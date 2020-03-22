@@ -4,6 +4,7 @@ namespace tamago::base::boolean
 
 use tamago::native::unsafe::boolean as N;
 use tamago::native::unsafe::types as Types;
+use tamago::base::equality exposing Equality;
 
 define Boolean = Types.Boolean;
 
@@ -21,3 +22,8 @@ define self === that =
 
 define self =/= that =
   N.not-eq(self, that);
+
+implement Equality(Boolean, Boolean) with
+  method self === that = self === that;
+  method self =/= that = self =/= that;
+end
