@@ -1,5 +1,6 @@
-import { map } from "./iterator";
+import { map, reduce } from "./iterator";
 import { Character } from "./character";
+import { LazySequence } from "./lazy-sequence";
 
 export function eq(a: string, b: string) {
   return a === b;
@@ -18,13 +19,13 @@ export function from_code_points(points: bigint[]) {
 }
 
 export function to_code_points(a: string) {
-  return [...a].map(x => BigInt(x.codePointAt(0)));
+  return new LazySequence(map(a, x => BigInt(x.codePointAt(0))));
 }
 
 export function to_characters(a: string) {
-  return [...a].map(x => new Character(x));
+  return new LazySequence(map(a, x => new Character(x)));
 }
 
-export function from_characters(a: Character[]) {
-  return a.reduce((a, b) => a + b.value, "");
+export function from_characters(a: Iterable<Character>) {
+  return reduce(a, "", (b, a) => a + b.value);
 }
