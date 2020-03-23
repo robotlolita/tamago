@@ -1,0 +1,28 @@
+% language: tamago
+namespace tamago::base::process
+
+use tamago::native::unsafe::types as Types;
+use tamago::native::unsafe::process as N;
+
+#category Types
+define Process = Types.Process;
+define Active-Process = Types.Active-Process;
+
+data Intermediate-Result =
+  | Yield { value }
+  | Done { value };
+
+define Yield = Intermediate-Result.Yield;
+define Done = Intermediate-Result.Done;
+
+let yield-fun = fun(x) -> Yield { value = x };
+let done-fun = fun(x) -> Done { value = x };
+
+#category Process actions
+define self start =
+  N.start(self);
+
+#category Active-Process actions
+define self resume-with: value =
+  N.resume-with(self, value, yield-fun, done-fun);
+

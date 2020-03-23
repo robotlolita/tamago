@@ -1,0 +1,86 @@
+% language: tamago
+namespace tamago::collection::iterable
+
+use tamago::native::unsafe::types as Types;
+use tamago::native::unsafe::iterable as N;
+use tamago::maths::integer exposing _ + _;
+use tamago::base::process exposing Yield, Done, _ resume-with: _;
+
+#category Interfaces
+interface Iterable(a) with
+  method a iterator;
+end
+
+#category Types
+define Iterator = Types.Iterator;
+define MemoisedIterator = Types.MemoisedIterator;
+
+#category Transforming
+define self enumerate =
+process
+  let mutable index = 1;
+  for value in self begin
+    yield { index, value };
+    index <- index + 1;
+  end
+end
+
+define self map: transformation =
+process
+  for value in self begin
+    yield transformation(value);
+  end
+end
+
+define self flat-map: transformation =
+process
+  for value in self begin
+    yield all transformation(value);
+  end
+end
+
+define self filter: predicate =
+process
+  for value in self begin
+    if predicate(value) then
+      yield value;
+    else
+      nothing;
+    end
+  end
+end
+
+define self fold-from: initial using: combinator =
+begin
+  let mutable accumulator = initial;
+  for value in self begin
+    accumulator <- combinator(accumulator, value);
+  end
+  accumulator;
+end
+
+define self collect-from: initial using: combinator =
+process
+  let mutable accumulator = initial;
+  for value in self begin
+    accumulator <- combinator(accumulator, value);
+    yield accumulator;
+  end
+  accumulator;
+end
+
+define self zip: that using: combinator =
+process
+  repeat
+    match #(self resume-with: nothing, that resume-with: nothing) with
+    | #(Yield { value = v1 }, Yield { value = v2 }) =>
+        yield combinator(v1, v2);
+    | _ =>
+        break; // FIXME: this does the wrong thing rn
+    end
+  end
+end
+
+define self zip: that =
+  self zip: that using: (fun(a, b) -> #(a, b));
+
