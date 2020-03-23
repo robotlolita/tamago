@@ -7,7 +7,7 @@ use tamago::base::boolean exposing not _;
 data Ordering =
   | Less-Than {}
   | Equal {}
-  | Greater-Than {}
+  | Greater-Than {};
 
 open Ordering exposing Less-Than, Equal, Greater-Than;
 
