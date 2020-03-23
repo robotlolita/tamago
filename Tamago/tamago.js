@@ -82,20 +82,20 @@ switch (args._[0]) {
   case 'compile': {
     const files = tamagoFiles(process.cwd());
     for (const file of files) {
+      console.log(`Compiling`, file);
       const target = file + '.js';
       const js = compileFile(file);
       write(target, js);
-      console.log(file, '->', target);
     }
     break;
   }
 
   case 'compile-file': {
+    console.log(`Compiling`, file);
     const file = args.file;
     const target = file + '.js';
     const js = compileFile(file);
     write(target, js);
-    console.log(file, '->', target);
     break;
   }
 
