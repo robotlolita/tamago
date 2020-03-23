@@ -108,3 +108,7 @@ export function to_digits(a: bigint, base: bigint) {
   const baseF = Number(base);
   return a.toString(baseF).split("").map(x => BigInt(parseInt(x, baseF)));
 }
+
+export function textual_representation(a: bigint) {
+  return a.toString();
+}

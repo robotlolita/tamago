@@ -4,6 +4,9 @@ namespace tamago::maths::float64
 use tamago::native::unsafe::types as Types;
 use tamago::native::unsafe::float64 as N;
 use tamago::base::ordering exposing less-than, equal, greater-than;
+use tamago::base::equality exposing Equality;
+use tamago::base::total-ordering exposing Total-Ordering;
+use tamago::debugging::textual-representation exposing Textual-Representation;
 
 
 #category Types
@@ -125,3 +128,25 @@ define self rounded =
 
 define self truncated =
   N.truncate(self);
+
+
+#category Implementations of protocols
+implement Textual-Representation(Float64) with
+  method self textual-representation =
+    N.textual-representation(self);
+end
+
+implement Equality(Float64, Float64) with
+  method self === that =
+    N.eq(self, that);
+
+  method self =/= that =
+    N.not-eq(self, that);
+end
+
+implement Total-Ordering(Float64, Float64) with
+  method self < that = N.lt(self, that);
+  method self <= that = N.lte(self, that);
+  method self > that = N.gt(self, that);
+  method self >= that = N.gte(self, that);
+end

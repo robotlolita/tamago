@@ -1,0 +1,24 @@
+% language: tamago
+namespace tamago::base::total-ordering
+
+use tamago::base::boolean exposing not _, _ or _;
+use tamago::base::equality exposing Equality;
+
+interface Total-Ordering(a, b) with
+  requires Equality(a, b);
+  
+  method a < b;
+
+  method a <= b =
+    Total-Ordering.`_ < _`(a, b)
+    or Equality.`_ === _`(a, b);
+
+  method a > b =
+    not (
+      Total-Ordering.`_ < _`(a, b)
+      or Equality.`_ === _`(a, b)
+    );
+  
+  method a >= b =
+    not Total-Ordering.`_ < _`(a, b);
+end

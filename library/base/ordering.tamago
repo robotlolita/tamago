@@ -2,76 +2,20 @@
 namespace tamago::base::ordering
 
 use tamago::base::boolean exposing not _;
+use tamago::compiler::annotations exposing derive: _;
+use tamago::base::equality exposing Equality;
+use tamago::debugging::textual-representation exposing Textual-Representation;
 
 #category Data types
+@derive: Textual-Representation;
+@derive: Equality;
 data Ordering =
-  | Less-Than {}
-  | Equal {}
-  | Greater-Than {};
+  | Less-Than
+  | Equal
+  | Greater-Than;
 
 open Ordering exposing Less-Than, Equal, Greater-Than;
 
-define less-than = Less-Than {};
-define equal = Equal {};
-define greater-than = Greater-Than {};
-
-#category Comparisons
-define self compare-to: that =
-begin
-  match self with
-  | Less-Than {} =>
-      match that with
-      | Less-Than {} => equal;
-      | Equal {} => greater-than;
-      | Greater-Than {} => greater-than;
-      end
-
-  | Equal {} =>  
-      match that with
-      | Less-Than {} => less-than;
-      | Equal {} => equal;
-      | Greater-Than {} => greater-than;
-      end
-
-  | Greater-Than {} =>
-      match that with
-      | Less-Than {} => less-than;
-      | Equal {} => less-than;
-      | Greater-Than {} => greater-than;
-      end
-  end
-end
-
-define self === that =
-begin
-  match #(self, that) with
-  | #(Less-Than {}, Less-Than {}) => true;
-  | #(Equal {}, Equal {}) => true;
-  | #(Greater-Than {}, Greater-Than {}) => true;
-  | _ => false;
-  end
-end
-
-define self =/= that =
-  not (self === that);
-
-#category Conversions
-define from-integer: value =
-begin
-  if value < 0 then
-    less-than;
-  else if value > 0 then
-    greater-than;
-  else
-    equal;
-  end
-end
-
-define ordering to-integer =
-begin
-  match ordering with
-  | Less-Than {} => -1;
-  | Equal {} => 0;
-  | Greater-Than {} => 1;
-  end
-end
+define less-than = Less-Than;
+define equal = Equal;
+define greater-than = Greater-Than;

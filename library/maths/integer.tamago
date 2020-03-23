@@ -5,6 +5,9 @@ namespace tamago::maths::integer
 use tamago::native::unsafe::types as Types;
 use tamago::native::unsafe::integer as N;
 use tamago::base::ordering exposing less-than, equal, greater-than;
+use tamago::base::equality exposing Equality;
+use tamago::base::total-ordering exposing Total-Ordering;
+use tamago::debugging::textual-representation exposing Textual-Representation;
 
 #category Types
 define Integer = Types.Integer;
@@ -83,3 +86,24 @@ define self to-decimal-digits =
 
 define self to-hexadecimal-digits =
   self to-digits-with-radix: 16;
+
+#category Implementations of protocols
+implement Textual-Representation(Integer) with
+  method self textual-representation =
+    N.textual-representation(self);
+end
+
+implement Equality(Integer, Integer) with
+  method self === that =
+    N.eq(self, that);
+
+  method self =/= that =
+    N.not-eq(self, that);
+end
+
+implement Total-Ordering(Integer, Integer) with
+  method self < that = N.lt(self, that);
+  method self <= that = N.lte(self, that);
+  method self > that = N.gt(self, that);
+  method self >= that = N.gte(self, that);
+end

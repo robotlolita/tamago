@@ -1,0 +1,9 @@
+% language: tamago
+namespace tamago::debugging::textual-representation
+
+/// Provides a default textual representation for an object.
+///
+/// This is used for all forms of text-based debugging.
+interface Textual-Representation(a) with
+  method a textual-representation;
+end

@@ -112,6 +112,14 @@ export function to_digits(a: number, base: bigint) {
   return a.toString(baseF).split("").map(x => BigInt(parseInt(x, baseF)));
 }
 
+export function textual_representation(a: number) {
+  if (a === Math.trunc(a)) {
+    return a.toString() + ".0";
+  } else {
+    return a.toString();
+  }
+}
+
 
 //== Floating point
 export const max_value = Number.MAX_VALUE;

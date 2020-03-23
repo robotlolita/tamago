@@ -1,6 +1,13 @@
 % language: tamago
 namespace tamago::base::lambda
 
+use tamago::native::unsafe::types as Types;
+use tamago::native::unsafe::lambda as N;
+use tamago::debugging::textual-representation exposing Textual-Representation;
+
+define Lambda = Types.Lambda;
+
+
 /// Right-to-left composition
 define f << g =
   fun(x) -> f(g(x));
@@ -9,3 +16,8 @@ define f << g =
 define f >> g =
   fun(x) -> g(f(x));
 
+
+implement Textual-Representation(Lambda) with
+  method self textual-representation =
+    N.textual-representation(self);
+end

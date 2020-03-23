@@ -5,6 +5,7 @@ namespace tamago::base::boolean
 use tamago::native::unsafe::boolean as N;
 use tamago::native::unsafe::types as Types;
 use tamago::base::equality exposing Equality;
+use tamago::debugging::textual-representation exposing Textual-Representation;
 
 define Boolean = Types.Boolean;
 
@@ -26,4 +27,14 @@ define self =/= that =
 implement Equality(Boolean, Boolean) with
   method self === that = self === that;
   method self =/= that = self =/= that;
+end
+
+implement Textual-Representation(Boolean) with
+  method self textual-representation =
+  begin
+    match self with
+    | true => "true"
+    | false => "false"
+    end
+  end
 end
