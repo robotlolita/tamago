@@ -5,5 +5,5 @@ use tamago::base::boolean exposing not _;
 
 interface Equality(a, b) with
   method a === b;
-  method a =/= b = not (a === b);
+  method a =/= b = not Equality.`_ === _`(a, b);
 end

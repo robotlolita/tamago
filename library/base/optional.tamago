@@ -7,7 +7,7 @@ define self then: transform =
 begin
   match self with
   | nothing => nothing;
-  | value => transform(value)
+  | value => transform(value);
   end
 end
 
@@ -46,7 +46,7 @@ end
 define self panic-if-absent: message =
 begin
   match self with
-  | nothing => Panic.raise: message;
+  | nothing => Panic.`raise: _`(message);
   | value => value;
   end
 end

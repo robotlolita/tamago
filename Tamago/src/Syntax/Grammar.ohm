@@ -285,8 +285,8 @@ Tamago : File {
     
   PipeExpression =
     | l:PipeExpression "|>" r:AssertMatchExpression     %[ EApply (r, [|l|]) ]%
-    | AssertMatchExpression
     | LambdaExpression
+    | AssertMatchExpression
 
   LambdaExpression =
     | BlockLambdaExpression
@@ -346,8 +346,12 @@ Tamago : File {
     | MemberExpression
 
   MemberExpression =
-    | o:MemberExpression "." k:PropName             %[ EProject (o, (LStatic k)) ]%
-    | o:MemberExpression "." "(" k:Expression ")"   %[ EProject (o, (LDynamic k)) ]%
+    | o:MemberExpression "." k:PropName
+      %[ EProject (o, (LStatic k)) ]%
+    | o:MemberExpression "." "`" s:Signature "`"
+      %[ EProject (o, (LStatic (sigToName s))) ]%
+    | o:MemberExpression "." "(" k:Expression ")"
+      %[ EProject (o, (LDynamic k)) ]%
     | PrimaryExpression
     
   PositionalArgumentList =
@@ -429,10 +433,11 @@ Tamago : File {
     | BlockLambdaExpression
 
 
-  PropName = n:id ~":"                                       %[ n ]%
+  PropName =
+    | n:id ~":"         %[ n ]%
+
   Name = ~reserved n:id ~":"                                 %[ n ]%
   Keyword = kw:keyword                                       %[ kw ]%
-  RestrictedMember = ~reserved ns:Namespace ~("." Keyword)   %[ ns ]%
   Namespace = namespace
   NamePattern = 
     | n:Name    %[ NStatic n ]%

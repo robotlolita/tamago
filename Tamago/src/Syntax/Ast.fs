@@ -164,7 +164,7 @@ let binarySig op l r =
 
 let selfToPrefix self =
   match self with
-  | Some _ -> "_:"
+  | Some _ -> "_ "
   | None -> ""
 
 let parseKeywords self keywords =
