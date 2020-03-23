@@ -210,7 +210,7 @@ Tamago : File {
 
   Pattern =
     | p:Pattern as_ n:Name                                          %[ PBindAs (p, (NStatic n)) ]%
-    | l:LiteralExpression                                           %[ PLiteral l ]%
+    | l:PatternLiteral                                              %[ PLiteral l ]%
     | "#(" ps:CommaList<Pattern> ")"                                %[ PTuple ps ]%
     | "[" hd:NonemptyListOf<Pattern, ","> "," "..." tl:Pattern "]"  %[ makeListPattern hd tl ]%
     | "[" xs:CommaList<Pattern> "]"                                 %[ makeListPattern xs PEmpty ]%
@@ -221,6 +221,12 @@ Tamago : File {
     | hole                                                          %[ PAnything ]%
     | n:Name                                                        %[ PBind (NStatic n) ]%
   
+  PatternLiteral =
+    | Float
+    | Integer
+    | Boolean
+    | n:nothing_      %[ LNothing ]%
+
   PairPattern =
     | l:Name "=" e:Pattern
       %[ (LStatic l, e) ]%
