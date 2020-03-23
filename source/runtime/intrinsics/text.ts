@@ -29,3 +29,7 @@ export function to_characters(a: string) {
 export function from_characters(a: Iterable<Character>) {
   return reduce(a, "", (b, a) => a + b.value);
 }
+
+export function textual_representation(x: string) {
+  return JSON.stringify(x);
+}

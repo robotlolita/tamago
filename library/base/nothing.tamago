@@ -1,0 +1,9 @@
+% language: tamago
+namespace tamago::base::nothing
+
+use tamago::debugging::textual-representation exposing Textual-Representation;
+
+implement Textual-Representation(nothing as type) with
+  method self textual-representation =
+    "nothing"
+end

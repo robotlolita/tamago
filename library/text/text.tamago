@@ -3,6 +3,7 @@ namespace tamago::text
 
 use tamago::native::unsafe::types as Types;
 use tamago::native::unsafe::text as N;
+use tamago::debugging::textual-representation exposing Textual-Representation;
 
 #category Types
 define Text = Types.Text;
@@ -27,3 +28,10 @@ define from-code-points: code-points =
 
 define from-characters: characters =
   N.from-characters(characters);
+
+
+#category Interface implementations
+implement Textual-Representation(Text) with
+  method self textual-representation =
+    N.textual-representation(self);
+end

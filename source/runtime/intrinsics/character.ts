@@ -14,3 +14,7 @@ export function from_code_point(x: bigint) {
 export function to_text(x: Character) {
   return x.value;
 }
+
+export function textual_representation(x: Character) {
+  return `<character: ${JSON.stringify(x.value)}>`;
+}
