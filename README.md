@@ -1,5 +1,9 @@
 # Tamago
 
+> **NOTE**: Tamago is in an early prototype phase and should not be used for
+>           anything serious. There'll be a lot of breaking changes, and things
+>           may not work as you expect!
+
 Tamago is a practical, safe, and observable programming language designed to
 allow efficient implementation on top of a JavaScript VM. One of the goals of
 Tamago is to be usable as a tool for teaching programming, and lowering the
